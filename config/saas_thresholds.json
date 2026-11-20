@@ -1,0 +1,79 @@
+{
+  "version": "1.0.0",
+  "stale_data_timeout_seconds": 30,
+  "collector_offline_timeout_seconds": 45,
+  "incident_correlation_window_seconds": 120,
+  "aiops_zscore_threshold": 3.0,
+  "metrics": {
+    "cpu_usage_pct": {
+      "unit": "%",
+      "thresholds": {
+        "excellent_max": 50.0,
+        "good_max": 75.0,
+        "fair_max": 90.0
+      },
+      "poor_reason": "High CPU utilization exceeding 90% (risk of compute throttling)"
+    },
+    "memory_usage_pct": {
+      "unit": "%",
+      "thresholds": {
+        "excellent_max": 60.0,
+        "good_max": 80.0,
+        "fair_max": 90.0
+      },
+      "poor_reason": "High memory pressure exceeding 90% (OOM killer danger)"
+    },
+    "disk_usage_pct": {
+      "unit": "%",
+      "thresholds": {
+        "excellent_max": 65.0,
+        "good_max": 80.0,
+        "fair_max": 92.0
+      },
+      "poor_reason": "Disk storage space critically low (>92% full)"
+    },
+    "latency_ms": {
+      "unit": "ms",
+      "thresholds": {
+        "excellent_max": 40.0,
+        "good_max": 120.0,
+        "fair_max": 250.0
+      },
+      "poor_reason": "Elevated network latency (>250ms) causing SLA breach"
+    },
+    "packet_loss_pct": {
+      "unit": "%",
+      "thresholds": {
+        "excellent_max": 0.1,
+        "good_max": 1.0,
+        "fair_max": 3.0
+      },
+      "poor_reason": "High packet loss (>3.0%) indicating network link degradation"
+    },
+    "bandwidth_mbps": {
+      "unit": "Mbps",
+      "thresholds": {
+        "excellent_max": 180.0,
+        "good_max": 350.0,
+        "fair_max": 450.0
+      },
+      "poor_reason": "Bandwidth saturation near link capacity"
+    },
+    "service_status": {
+      "unit": "state",
+      "thresholds": {
+        "up_val": 1.0
+      },
+      "poor_reason": "Critical service is down / stopped responding"
+    },
+    "failed_logins": {
+      "unit": "count",
+      "thresholds": {
+        "excellent_max": 0,
+        "good_max": 2,
+        "fair_max": 4
+      },
+      "poor_reason": "Repeated authentication failures detected (possible credential attack)"
+    }
+  }
+}

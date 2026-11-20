@@ -1,0 +1,30 @@
+# SQLite Databases
+*.db
+*.db-journal
+collector_local.db
+saas_cloud.db
+
+# Log files
+*.log
+collector.log
+saas.log
+
+# Binaries & Virtual Environments
+mkcert
+.venv/
+node_modules/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local Test Captures & Backups
+test_screen.png
+certs/backup/

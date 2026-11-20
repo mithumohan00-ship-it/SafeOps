@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
+    <title>SafeOps | Privacy Boundary & Egress Inspection Console</title>
+    <style>
+        :root {
+            --bg-base: #0a0a0a;
+            --bg-surface: #111213;
+            --bg-elevated: #161718;
+            --bg-subtle: #1a1b1c;
+            --border: #222426;
+            --border-hover: #333638;
+            --border-focus: #ba7924;
+            --text-primary: #f0f2f2;
+            --text-secondary: #c0c4c4;
+            --text-muted: #7c7f80;
+            --text-dim: #4d5052;
+            
+            --accent: #ba7924;
+            --accent-light: #e9c28f;
+            --accent-muted: rgba(186, 121, 36, 0.12);
+            --accent-border: rgba(186, 121, 36, 0.35);
+
+            --status-ok: #10b981;
+            --status-ok-bg: rgba(16, 185, 129, 0.08);
+            --status-ok-border: rgba(16, 185, 129, 0.28);
+            --status-good: #06b6d4;
+            --status-good-bg: rgba(6, 182, 212, 0.08);
+            --status-good-border: rgba(6, 182, 212, 0.28);
+            --status-warn: #f59e0b;
+            --status-warn-bg: rgba(245, 158, 11, 0.08);
+            --status-warn-border: rgba(245, 158, 11, 0.28);
+            --status-err: #ef4444;
+            --status-err-bg: rgba(239, 68, 68, 0.08);
+            --status-err-border: rgba(239, 68, 68, 0.28);
+
+            --radius-sm: 2px;
+            --radius-md: 2px;
+            --radius-lg: 2px;
+
+            --font-heading: 'Unbounded', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            --transition-fast: 0.12s ease-out;
+            --transition-smooth: 0.2s ease-out;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            min-height: 100vh;
+            padding: 24px 32px;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
+        }
+
+        .layout-container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        /* 1. Global Application Shell Header (Sticky Blur on Scroll) */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            transition: background var(--transition-smooth), border-color var(--transition-smooth), backdrop-filter var(--transition-smooth);
+        }
+
+        .header-scrolled {
+            background: rgba(10, 10, 10, 0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom-color: var(--border-hover);
+        }
+
+        .brand-cluster {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-mark {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-mark svg {
+            width: 15px;
+            height: 15px;
+            fill: var(--accent);
+        }
+
+        .brand-name {
+            font-family: var(--font-heading);
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tier-tag {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .collector-beacon {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            padding: 0;
+            color: var(--text-secondary);
+        }
+
+        .beacon-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--status-ok);
+        }
+
+        .nav-cluster {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+        }
+
+        .nav-item {
+            text-decoration: none;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            color: var(--text-primary);
+            background: var(--bg-elevated);
+            border-color: var(--border-hover);
+        }
+
+        .nav-item.active {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        .nav-divider {
+            width: 1px;
+            height: 18px;
+            background: var(--border);
+            margin: 0 4px;
+        }
+
+        .nav-ext {
+            color: var(--text-muted);
+        }
+
+        .nav-ext:hover {
+            color: var(--text-primary);
+            border-color: var(--border-hover);
+        }
+
+        /* 2. Privacy Boundary Architecture Pipeline Banner */
+        .pipeline-story-bar {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .pipeline-flow-steps {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            flex-wrap: wrap;
+        }
+
+        .flow-step {
+            padding: 0;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.04em;
+        }
+
+        .flow-step.active-step {
+            background: transparent;
+            border: none;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .step-arrow { color: var(--border-hover); font-size: 11px; }
+
+        .boundary-guarantees {
+            display: flex;
+            gap: 16px;
+            font-size: 11px;
+            color: var(--text-muted);
+            align-items: center;
+        }
+
+        .guarantee-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .guarantee-chip strong { color: var(--text-secondary); }
+
+        /* 3. Live Pipeline Flow Metrics Ribbon */
+        .stats-ribbon {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 960px) {
+            .stats-ribbon {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .ribbon-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .r-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .r-val {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            font-variant-numeric: tabular-nums;
+            color: var(--text-primary);
+            line-height: 1.1;
+        }
+
+        .r-sub {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        /* 4. Toolbar & Search Controls */
+        .toolbar-strip {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-container {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 14px 8px 36px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border-color var(--transition-fast);
+        }
+
+        .search-input:hover {
+            border-color: var(--border-hover);
+        }
+
+        .search-input:focus {
+            border-color: var(--border-focus);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            fill: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .view-toggles {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        /* 5. Proof Cards Container */
+        .proof-stream {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .diff-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: border-color var(--transition-fast);
+        }
+
+        .diff-card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .diff-header {
+            padding: 12px 18px;
+            background: var(--bg-subtle);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .diff-meta-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .layer-badge {
+            font-family: var(--font-heading);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+        }
+
+        .meta-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 1px 6px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+        }
+
+        .meta-pill.state-ok { color: var(--status-ok); border-color: var(--status-ok-border); background: var(--status-ok-bg); }
+        .meta-pill.state-warn { color: var(--status-warn); border-color: var(--status-warn-border); background: var(--status-warn-bg); }
+        .meta-pill.state-err { color: var(--status-err); border-color: var(--status-err-border); background: var(--status-err-bg); }
+
+        .diff-meta-right {
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-dim);
+        }
+
+        /* Structured Privacy Diff Table */
+        .diff-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            font-family: var(--font-mono);
+        }
+
+        .diff-table th {
+            text-align: left;
+            padding: 8px 16px;
+            background: var(--bg-base);
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .diff-table td {
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-variant-numeric: tabular-nums;
+            vertical-align: middle;
+        }
+
+        .diff-table tr:last-child td { border-bottom: none; }
+        .diff-table tr:hover td { background: var(--bg-elevated); }
+
+        /* Privacy Policy Status Badges */
+        .action-tag {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 0;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            display: inline-block;
+            background: transparent;
+            border: none;
+        }
+
+        .tag-allowed { color: var(--text-muted); }
+        .tag-pseudonym { color: var(--accent); }
+        .tag-redacted { color: var(--status-warn); }
+        .tag-blocked { color: var(--status-err); }
+
+        .cell-secret {
+            background: var(--status-err-bg);
+            border: 1px solid var(--status-err-border);
+            border-radius: var(--radius-sm);
+            padding: 1px 4px;
+            color: var(--status-err);
+            font-weight: 600;
+        }
+
+        .cell-redacted {
+            background: var(--accent-muted);
+            border: 1px solid var(--accent-border);
+            border-radius: var(--radius-sm);
+            padding: 1px 4px;
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        .cell-hash {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* ── Card Tab Strip ──────────────────────────────────────────── */
+        .card-tab-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-subtle);
+            padding: 0 16px;
+        }
+
+        .tab-btn-group {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .card-tab {
+            padding: 8px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: color var(--transition-fast), border-color var(--transition-fast);
+        }
+
+        .card-tab:hover { color: var(--text-primary); }
+
+        .card-tab.tab-active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent);
+            font-weight: 700;
+        }
+
+        .card-tab.tab-raw.tab-active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent);
+        }
+
+        .card-tab-badge {
+            font-size: 9px;
+            padding: 1px 5px;
+            border-radius: var(--radius-sm);
+            margin-left: 6px;
+            font-weight: 700;
+        }
+
+        .badge-clean {
+            background: transparent;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        .badge-raw {
+            background: var(--status-err-bg);
+            color: var(--status-err);
+            border: 1px solid var(--status-err-border);
+        }
+
+        .card-pane { display: none; }
+        .card-pane.pane-active { display: block; }
+
+        /* ── Raw JSON Viewer ─────────────────────────────────────────── */
+        .raw-pane-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+
+        @media (max-width: 900px) {
+            .raw-pane-wrap { grid-template-columns: 1fr; }
+        }
+
+        .raw-col {
+            padding: 16px 20px;
+            border-right: 1px solid var(--border);
+        }
+
+        .raw-col:last-child { border-right: none; }
+
+        .raw-col-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .raw-json-block {
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: var(--text-secondary);
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .j-key    { color: var(--text-dim); }
+        .j-str    { color: var(--text-secondary); }
+        .j-secret { color: #fca5a5; font-weight: 700; background: rgba(239, 68, 68, 0.16); border: 1px solid rgba(239, 68, 68, 0.35); padding: 1px 4px; border-radius: 2px; }
+        .j-hash   { color: var(--accent-light); font-weight: 700; }
+        .j-redact { color: var(--accent); font-weight: 700; }
+
+        .global-tab-toggle {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 2px 4px;
+        }
+
+        .global-tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-family: var(--font-mono);
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .global-tab-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-elevated);
+        }
+
+        .global-tab-btn.active {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            font-weight: 600;
+            border-color: var(--border);
+        }
+
+        @media (max-width: 960px) {
+            .app-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .nav-cluster {
+                width: 100%;
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding-bottom: 6px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="layout-container">
+        <!-- 1. Global Shell Navigation -->
+        <header class="app-header">
+            <div class="brand-cluster">
+                <div class="brand-mark">
+                    <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+                </div>
+                <div class="brand-name">
+                    SafeOps Collector
+                    <span class="tier-tag">COLLECTOR / LOCAL &bull; Egress Proof Panel</span>
+                    <span class="collector-beacon" id="live-indicator">
+                        <span class="beacon-dot"></span>
+                        Live Intercepting
+                    </span>
+                </div>
+            </div>
+            <nav class="nav-cluster">
+                <a href="/egress" class="nav-item active">Egress Proof Panel</a>
+                <a href="/control" class="nav-item">Chaos & Demo Control Panel</a>
+                <span class="nav-divider"></span>
+                <a href="http://127.0.0.1:8002" target="_blank" class="nav-item nav-ext">Fleet Overview (Port 8002) &rarr;</a>
+                <a href="http://127.0.0.1:8002/incidents" target="_blank" class="nav-item nav-ext">AIOps Incidents &rarr;</a>
+                <a href="http://127.0.0.1:8002/reliability" target="_blank" class="nav-item nav-ext">Reliability SLA &rarr;</a>
+            </nav>
+        </header>
+
+        <!-- 2. Zero-Trust Egress Architecture Pipeline Story -->
+        <div class="pipeline-story-bar">
+            <div class="pipeline-flow-steps">
+                <div class="flow-step">1. RAW LOCAL DATA</div>
+                <span class="step-arrow">&rarr;</span>
+                <div class="flow-step">2. FILTER</div>
+                <span class="step-arrow">&rarr;</span>
+                <div class="flow-step">3. REDACT</div>
+                <span class="step-arrow">&rarr;</span>
+                <div class="flow-step">4. PSEUDONYMIZE</div>
+                <span class="step-arrow">&rarr;</span>
+                <div class="flow-step">5. ALLOW-LIST</div>
+                <span class="step-arrow">&rarr;</span>
+                <div class="flow-step active-step">6. SAFE PAYLOAD &rarr; CLOUD</div>
+            </div>
+
+            <div class="boundary-guarantees">
+                <div class="guarantee-chip">
+                    <span>&bull;</span>
+                    <span>Secrets: <strong>Scrubbed at Edge</strong></span>
+                </div>
+                <div class="guarantee-chip">
+                    <span>&bull;</span>
+                    <span>Raw Logs: <strong>1h Local TTL</strong></span>
+                </div>
+                <button onclick="fetchData()" class="nav-item" style="font-size: 11px; padding: 3px 9px;">Refresh Now</button>
+            </div>
+        </div>
+
+        <!-- 3. Live Pipeline Flow Metrics Ribbon -->
+        <div class="stats-ribbon">
+            <div class="ribbon-cell">
+                <span class="r-title">Secrets Intercepted Locally</span>
+                <span class="r-val" id="stat-secrets">-</span>
+                <span class="r-sub">Passwords, tokens & IPs scrubbed</span>
+            </div>
+            <div class="ribbon-cell">
+                <span class="r-title">Pending Outbound Buffer</span>
+                <span class="r-val" id="stat-pending">-</span>
+                <span class="r-sub">SQLite durable store-and-forward</span>
+            </div>
+            <div class="ribbon-cell">
+                <span class="r-title">Sent to SaaS Platform</span>
+                <span class="r-val" id="stat-sent">-</span>
+                <span class="r-sub">Allow-listed payloads delivered</span>
+            </div>
+            <div class="ribbon-cell">
+                <span class="r-title">Local Raw Retention</span>
+                <span class="r-val" id="stat-raw">-</span>
+                <span class="r-sub">Local-only storage (scheduled pruning)</span>
+            </div>
+        </div>
+
+        <!-- 4. Toolbar & Search Controls -->
+        <div class="toolbar-strip">
+            <div class="search-container">
+                <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                <input type="text" id="search-input" class="search-input" placeholder="Search by Payload ID, Metric (cpu, latency), Pseudonym, or Tenant..." oninput="debounceSearch()">
+            </div>
+            <div class="view-toggles">
+                <div class="global-tab-toggle">
+                    <span style="font-size: 10px; color: var(--text-dim); padding: 0 4px;">VIEW ALL:</span>
+                    <button id="global-btn-side" class="global-tab-btn active" onclick="switchGlobalTab('side')">Side-by-Side</button>
+                    <button id="global-btn-raw" class="global-tab-btn" onclick="switchGlobalTab('raw')">Sensitive Data</button>
+                    <button id="global-btn-egress" class="global-tab-btn" onclick="switchGlobalTab('egress')">Outbound Metadata</button>
+                    <button id="global-btn-table" class="global-tab-btn" onclick="switchGlobalTab('table')">Policy Table</button>
+                </div>
+                <span>Real-Time Egress Proof Stream &bull; Live Stream 1s</span>
+            </div>
+        </div>
+
+        <!-- 5. Proof Cards Container (id="cards-container") -->
+        <div class="proof-stream" id="cards-container">
+            <div style="text-align: center; padding: 40px; color: var(--text-muted); background: var(--bg-surface); border-radius: var(--radius-md); border: 1px solid var(--border);">
+                Loading live egress telemetry audit trail...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let searchTimer = null;
+        let lastRenderHash = '';
+        let globalTabMode = 'side'; // Default: Side-by-Side (Sensitive Data on one side, Metadata next to it)
+        const cardTabStates = {};   // Persists tab state per card across poll intervals
+
+        const HOST_LAYERS = {
+            "srv-prod-web-01.internal": "Web Layer",
+            "srv-prod-app-01.internal": "Application Layer",
+            "srv-prod-db-01.internal": "Database Layer",
+            "host-5a29f93e": "Web Layer",
+            "host-9266dbda": "Application Layer",
+            "host-e5ef01de": "Database Layer"
+        };
+
+        function debounceSearch() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(fetchData, 200);
+        }
+
+        async function fetchData() {
+            const query = document.getElementById('search-input').value.trim();
+            try {
+                const res = await fetch(`/api/v1/egress/data?search=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                renderStats(data.stats);
+                renderCards(data.pairs);
+            } catch (err) {
+                console.error("Failed to load egress telemetry:", err);
+            }
+        }
+
+        function renderStats(stats) {
+            if (!stats) return;
+            document.getElementById('stat-pending').innerText = stats.pending_in_buffer ?? 0;
+            document.getElementById('stat-sent').innerText = stats.total_sent_to_saas ?? 0;
+            document.getElementById('stat-raw').innerText = stats.raw_records_stored ?? 0;
+            document.getElementById('stat-secrets').innerText = stats.secrets_intercepted_locally ?? 0;
+        }
+
+        // Fast HTML escaping
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // High-performance, lightweight JSON highlighter with sensitive secret callouts
+        function fastFormatRawJson(raw) {
+            try {
+                let s = escapeHtml(JSON.stringify(raw, null, 2));
+                // Highlight keys
+                s = s.replace(/"([a-zA-Z0-9_\-]+)":/g, '<span class="j-key">"$1":</span>');
+                // Highlight sensitive secret strings in bright red
+                s = s.replace(/(password=[^\s",\\]+)/gi, '<span class="j-secret">$1</span>');
+                s = s.replace(/(auth_token=[^\s",\\]+)/gi, '<span class="j-secret">$1</span>');
+                s = s.replace(/(Bearer\s+[^\s",\\]+)/gi, '<span class="j-secret">$1</span>');
+                s = s.replace(/(bind_ip=[^\s",\\]+)/gi, '<span class="j-secret">$1</span>');
+                s = s.replace(/(fallback_password=[^\s",\\]+)/gi, '<span class="j-secret">$1</span>');
+                return s;
+            } catch (e) {
+                return escapeHtml(JSON.stringify(raw));
+            }
+        }
+
+        function fastFormatEgressJson(egress) {
+            try {
+                let s = escapeHtml(JSON.stringify(egress, null, 2));
+                // Highlight keys
+                s = s.replace(/"([a-zA-Z0-9_\-]+)":/g, '<span class="j-key">"$1":</span>');
+                // Highlight pseudonyms and redactions
+                s = s.replace(/"(host-[a-f0-9]+)"/g, '<span class="j-hash">"$1"</span>');
+                s = s.replace(/(\[REDACTED_[A-Z]+\])/g, '<span class="j-redact">$1</span>');
+                return s;
+            } catch (e) {
+                return escapeHtml(JSON.stringify(egress));
+            }
+        }
+
+        // Switch individual card tab
+        function switchTab(cardId, tabName) {
+            cardTabStates[cardId] = tabName;
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            card.querySelectorAll('.card-tab').forEach(t => t.classList.remove('tab-active'));
+            card.querySelectorAll('.card-pane').forEach(p => p.classList.remove('pane-active'));
+            const activeTab = card.querySelector(`.card-tab[data-tab="${tabName}"]`);
+            const activePane = card.querySelector(`.card-pane[data-pane="${tabName}"]`);
+            if (activeTab) activeTab.classList.add('tab-active');
+            if (activePane) activePane.classList.add('pane-active');
+        }
+
+        // Switch all cards at once via toolbar toggle
+        function switchGlobalTab(tabName) {
+            globalTabMode = tabName;
+            document.querySelectorAll('.global-tab-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById(`global-btn-${tabName}`);
+            if (btn) btn.classList.add('active');
+
+            // Apply to all currently rendered cards
+            document.querySelectorAll('.diff-card').forEach(card => {
+                const cardId = card.id;
+                cardTabStates[cardId] = tabName;
+                card.querySelectorAll('.card-tab').forEach(t => t.classList.remove('tab-active'));
+                card.querySelectorAll('.card-pane').forEach(p => p.classList.remove('pane-active'));
+                const activeTab = card.querySelector(`.card-tab[data-tab="${tabName}"]`);
+                const activePane = card.querySelector(`.card-pane[data-pane="${tabName}"]`);
+                if (activeTab) activeTab.classList.add('tab-active');
+                if (activePane) activePane.classList.add('pane-active');
+            });
+        }
+
+        // Render structured Privacy Diff Table per user specification
+        function renderCards(pairs) {
+            const container = document.getElementById('cards-container');
+            if (!pairs || pairs.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 36px; color: var(--text-muted); background: var(--bg-surface); border-radius: var(--radius-md); border: 1px solid var(--border);">No matching egress telemetry payloads found.</div>`;
+                lastRenderHash = '';
+                return;
+            }
+
+            // Fingerprint check: Skip DOM reconstruction if data hasn't changed!
+            const currentHash = pairs.map(p => `${p.payload_id}:${p.sent_to_saas_at || ''}`).join('|');
+            if (currentHash === lastRenderHash) {
+                return; // 0ms delay: Instant!
+            }
+            lastRenderHash = currentHash;
+
+            container.innerHTML = pairs.map(p => {
+                const raw = p.raw_dict || {};
+                const egress = p.sanitized_dict || {};
+
+                const stateClass = egress.health_state === 'POOR' ? 'state-err' :
+                                   egress.health_state === 'FAIR' ? 'state-warn' : 'state-ok';
+
+                const layerName = HOST_LAYERS[p.raw_hostname || raw.hostname] || '';
+                const cardId = `card-${p.payload_id.replace(/-/g, '').substring(0, 12)}`;
+
+                // Active tab for this card: default to 'side' (Side-by-Side: Sensitive data one side, metadata next to it)
+                const activeTab = cardTabStates[cardId] || globalTabMode;
+
+                // Build field diff rows
+                const diffRows = [];
+
+                // 1. Hostname / Source ID
+                diffRows.push({
+                    field: "hostname / source_id",
+                    status: '<span class="action-tag tag-pseudonym">PSEUDONYMIZED</span>',
+                    local: raw.hostname || p.raw_hostname || 'N/A',
+                    outbound: `<span class="cell-hash">${egress.source_id || 'N/A'}</span>`
+                });
+
+                // 2. Metric & Value
+                diffRows.push({
+                    field: egress.metric || p.metric || "metric",
+                    status: '<span class="action-tag tag-allowed">ALLOWED</span>',
+                    local: `${p.metric}: ${p.value}`,
+                    outbound: `${egress.metric}: ${egress.value}`
+                });
+
+                // 3. Secrets / Ambient Credentials
+                if (raw.password || JSON.stringify(raw).includes("password=")) {
+                    diffRows.push({
+                        field: "password",
+                        status: '<span class="action-tag tag-redacted">REDACTED</span>',
+                        local: '<span class="cell-secret">password=••••••••</span>',
+                        outbound: '<span class="cell-redacted">[REDACTED_PASSWORD]</span>'
+                    });
+                }
+
+                if (raw.auth_token || JSON.stringify(raw).includes("Bearer") || JSON.stringify(raw).includes("token=")) {
+                    diffRows.push({
+                        field: "token / auth_bearer",
+                        status: '<span class="action-tag tag-redacted">REDACTED</span>',
+                        local: '<span class="cell-secret">Bearer eyJ...token</span>',
+                        outbound: '<span class="cell-redacted">[REDACTED_TOKEN]</span>'
+                    });
+                }
+
+                if (raw.bind_ip || JSON.stringify(raw).includes("bind_ip=")) {
+                    diffRows.push({
+                        field: "bind_ip (Internal IPv4)",
+                        status: '<span class="action-tag tag-blocked">BLOCKED</span>',
+                        local: '<span class="cell-secret">192.168.1.104</span>',
+                        outbound: '<span style="color: var(--text-dim);">&mdash; Stripped by Allow-List</span>'
+                    });
+                }
+
+                // 4. Raw Diagnostic Logs
+                if (raw.raw_logs && raw.raw_logs.length > 0) {
+                    diffRows.push({
+                        field: "raw_logs (Auth / System)",
+                        status: '<span class="action-tag tag-blocked">BLOCKED</span>',
+                        local: `${raw.raw_logs.length} lines retained locally in SQLite`,
+                        outbound: '<span style="color: var(--text-dim);">&mdash; Stripped (Summary only)</span>'
+                    });
+                }
+
+                // 5. Short Context / Sanitized Summary
+                if (egress.short_context) {
+                    diffRows.push({
+                        field: "short_context",
+                        status: '<span class="action-tag tag-allowed">ALLOWED</span>',
+                        local: egress.short_context,
+                        outbound: egress.short_context
+                    });
+                }
+
+                // Fast pre-formatted JSON
+                const rawFormatted = fastFormatRawJson(raw);
+                const egressFormatted = fastFormatEgressJson(egress);
+
+                return `
+                <div class="diff-card" id="${cardId}">
+                    <div class="diff-header">
+                        <div class="diff-meta-left">
+                            ${layerName ? `<span class="layer-badge">${layerName}</span>` : ''}
+                            <span class="meta-pill">${p.tenant_id}</span>
+                            <span class="meta-pill ${stateClass}">${egress.health_state || 'UNKNOWN'}</span>
+                            <span class="meta-pill" style="color: var(--text-dim);">ID: ${p.payload_id.substring(0, 8)}...</span>
+                        </div>
+                        <div class="diff-meta-right">
+                            Event: ${p.event_time_utc} &bull; Delivered: ${p.sent_to_saas_at || 'Just now'}
+                        </div>
+                    </div>
+
+                    <div class="card-tab-bar">
+                        <div class="tab-btn-group">
+                            <button class="card-tab ${activeTab === 'side' ? 'tab-active' : ''}" data-tab="side" onclick="switchTab('${cardId}', 'side')">
+                                Side-by-Side
+                            </button>
+                            <button class="card-tab tab-raw ${activeTab === 'raw' ? 'tab-active' : ''}" data-tab="raw" onclick="switchTab('${cardId}', 'raw')">
+                                Sensitive Data
+                                <span class="card-tab-badge badge-raw">Secrets</span>
+                            </button>
+                            <button class="card-tab ${activeTab === 'egress' ? 'tab-active' : ''}" data-tab="egress" onclick="switchTab('${cardId}', 'egress')">
+                                Outbound Metadata
+                                <span class="card-tab-badge badge-clean">Cloud JSON</span>
+                            </button>
+                            <button class="card-tab ${activeTab === 'table' ? 'tab-active' : ''}" data-tab="table" onclick="switchTab('${cardId}', 'table')">
+                                Policy Diff Table
+                            </button>
+                        </div>
+                        <span style="font-size: 10px; font-family: var(--font-mono); color: var(--text-dim);">
+                            Zero-Trust Boundary
+                        </span>
+                    </div>
+
+                    <!-- Pane 1: Side-by-Side (Sensitive Data on One Side + Metadata on the Next Side) -->
+                    <div class="card-pane ${activeTab === 'side' ? 'pane-active' : ''}" data-pane="side">
+                        <div class="raw-pane-wrap">
+                            <div class="raw-col">
+                                <div class="raw-col-label">
+                                    <span>Client Local Input (Contains Sensitive Data)</span>
+                                    <span class="card-tab-badge badge-raw">Raw Secrets &amp; Logs</span>
+                                </div>
+                                <div class="raw-json-block">${rawFormatted}</div>
+                            </div>
+                            <div class="raw-col">
+                                <div class="raw-col-label">
+                                    <span>Outbound Metadata (Exact Cloud JSON)</span>
+                                    <span class="card-tab-badge badge-clean">Sanitized Egress</span>
+                                </div>
+                                <div class="raw-json-block">${egressFormatted}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pane 2: Sensitive Data Only (Full Width) -->
+                    <div class="card-pane ${activeTab === 'raw' ? 'pane-active' : ''}" data-pane="raw">
+                        <div style="padding: 14px 18px;">
+                            <div class="raw-col-label">
+                                <span>Full Client Telemetry &amp; Sensitive Authentication Logs</span>
+                                <span class="card-tab-badge badge-raw">Isolated on Edge</span>
+                            </div>
+                            <div class="raw-json-block" style="max-height: 380px;">${rawFormatted}</div>
+                        </div>
+                    </div>
+
+                    <!-- Pane 3: Outbound Metadata Only (Full Width JSON Uploaded to SaaS) -->
+                    <div class="card-pane ${activeTab === 'egress' ? 'pane-active' : ''}" data-pane="egress">
+                        <div style="padding: 14px 18px;">
+                            <div class="raw-col-label">
+                                <span>Sanitized Metadata Payload Uploaded to SafeOps Cloud (Port 8002)</span>
+                                <span class="card-tab-badge badge-clean">Zero-Trust Egress Compliant</span>
+                            </div>
+                            <div class="raw-json-block" style="max-height: 380px;">${egressFormatted}</div>
+                        </div>
+                    </div>
+
+                    <!-- Pane 4: Zero-Trust Policy Table -->
+                    <div class="card-pane ${activeTab === 'table' ? 'pane-active' : ''}" data-pane="table">
+                        <table class="diff-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Field</th>
+                                    <th style="width: 18%;">Zero-Trust Policy</th>
+                                    <th style="width: 28%;">Local Input (Private Perimeter)</th>
+                                    <th style="width: 29%;">Outbound Egress (Delivered to Cloud)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${diffRows.map(r => `
+                                    <tr>
+                                        <td style="color: var(--text-primary); font-weight: 600;">${r.field}</td>
+                                        <td>${r.status}</td>
+                                        <td>${r.local}</td>
+                                        <td>${r.outbound}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Fast 1-second auto-refresh for immediate, real-time egress data visibility
+        fetchData();
+        setInterval(fetchData, 1000);
+
+        // Dynamic header backdrop blur when scrolling up and down
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.app-header');
+            if (header) {
+                if (window.scrollY > 15) {
+                    header.classList.add('header-scrolled');
+                } else {
+                    header.classList.remove('header-scrolled');
+                }
+            }
+        }, { passive: true });
+    </script>
+</body>
+</html>

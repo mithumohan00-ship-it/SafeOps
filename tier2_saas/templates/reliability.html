@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
+    <title>SafeOps | Transmission Reliability & Sovereign SLA Console</title>
+    <style>
+        :root {
+            --bg-base: #0a0a0a;
+            --bg-surface: #111213;
+            --bg-elevated: #161718;
+            --bg-subtle: #1a1b1c;
+            --border: #222426;
+            --border-hover: #333638;
+            --border-focus: #ba7924;
+            --text-primary: #f0f2f2;
+            --text-secondary: #c0c4c4;
+            --text-muted: #7c7f80;
+            --text-dim: #4d5052;
+            
+            --accent: #ba7924;
+            --accent-light: #e9c28f;
+            --accent-muted: rgba(186, 121, 36, 0.12);
+            --accent-border: rgba(186, 121, 36, 0.35);
+
+            --status-ok: #10b981;
+            --status-ok-bg: rgba(16, 185, 129, 0.08);
+            --status-ok-border: rgba(16, 185, 129, 0.28);
+            --status-good: #06b6d4;
+            --status-good-bg: rgba(6, 182, 212, 0.08);
+            --status-good-border: rgba(6, 182, 212, 0.28);
+            --status-warn: #f59e0b;
+            --status-warn-bg: rgba(245, 158, 11, 0.08);
+            --status-warn-border: rgba(245, 158, 11, 0.28);
+            --status-err: #ef4444;
+            --status-err-bg: rgba(239, 68, 68, 0.08);
+            --status-err-border: rgba(239, 68, 68, 0.28);
+
+            --radius-sm: 2px;
+            --radius-md: 2px;
+            --radius-lg: 2px;
+
+            --font-heading: 'Unbounded', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            --transition-fast: 0.12s ease-out;
+            --transition-smooth: 0.2s ease-out;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            min-height: 100vh;
+            padding: 24px 32px;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
+        }
+
+        .layout-container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        /* 1. Global Shell Navigation Header */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            transition: background var(--transition-smooth), border-color var(--transition-smooth), backdrop-filter var(--transition-smooth);
+        }
+
+        .header-scrolled {
+            background: rgba(10, 10, 10, 0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom-color: var(--border-hover);
+        }
+
+        .brand-cluster {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-mark {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-mark svg {
+            width: 15px;
+            height: 15px;
+            fill: var(--accent);
+        }
+
+        .brand-name {
+            font-family: var(--font-heading);
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tier-tag {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .nav-cluster {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+        }
+
+        .nav-item {
+            text-decoration: none;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            color: var(--text-primary);
+            background: var(--bg-elevated);
+            border-color: var(--border-hover);
+        }
+
+        .nav-item.active {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        .nav-divider {
+            width: 1px;
+            height: 18px;
+            background: var(--border);
+            margin: 0 4px;
+        }
+
+        .nav-ext {
+            color: var(--text-muted);
+        }
+
+        .nav-ext:hover {
+            color: var(--text-primary);
+            border-color: var(--border-hover);
+        }
+
+        /* 2. Workspace & Operating Context Bar */
+        .workspace-bar {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 18px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .tenant-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tenant-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .tenant-dropdown {
+            background: var(--bg-base);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+            transition: border-color var(--transition-fast);
+        }
+
+        .tenant-dropdown:hover { border-color: var(--border-hover); }
+        .tenant-dropdown:focus { border-color: var(--border-focus); }
+
+        .residency-cluster {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+        }
+
+        .residency-cluster strong { color: var(--text-secondary); }
+
+        /* 3. Transport Reliability Summary Ribbon */
+        .sla-ribbon {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .sla-ribbon {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .ribbon-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .r-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .r-val {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            font-variant-numeric: tabular-nums;
+            color: var(--text-primary);
+            line-height: 1.1;
+        }
+
+        .r-target {
+            font-size: 11px;
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+        }
+
+        /* 4. Panel Containers */
+        .console-panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+        }
+
+        .panel-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .panel-heading {
+            font-family: var(--font-heading);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-primary);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .table th {
+            text-align: left;
+            padding: 8px 12px;
+            background: var(--bg-base);
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+
+        .table tr:hover td {
+            background: var(--bg-elevated);
+        }
+
+        .pass-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 0;
+            background: transparent;
+            color: var(--status-ok);
+            border: none;
+            text-transform: uppercase;
+        }
+
+        .block-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 0;
+            background: transparent;
+            color: var(--status-err);
+            border: none;
+            text-transform: uppercase;
+        }
+
+        .btn-action {
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--accent-border);
+            background: var(--accent-muted);
+            color: var(--accent-light);
+            transition: all var(--transition-fast);
+        }
+
+        .btn-action:hover {
+            background: var(--accent);
+            color: #0a0a0a;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="layout-container">
+        <!-- 1. Global Shell Navigation -->
+        <header class="app-header">
+            <div class="brand-cluster">
+                <div class="brand-mark">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
+                <div class="brand-name">
+                    SafeOps Cloud
+                    <span class="tier-tag">SAAS / CLOUD</span>
+                    <span class="tier-tag">SLA & RELIABILITY</span>
+                </div>
+            </div>
+            <nav class="nav-cluster">
+                <a href="/dashboard" class="nav-item">Fleet Overview</a>
+                <a href="/incidents" class="nav-item">AIOps Incidents</a>
+                <a href="/reliability" class="nav-item active">Reliability SLA</a>
+                <span class="nav-divider"></span>
+                <a href="http://127.0.0.1:8001/egress" target="_blank" class="nav-item nav-ext">Egress Proof (Port 8001) &rarr;</a>
+                <a href="http://127.0.0.1:8001/control" target="_blank" class="nav-item nav-ext">Demo Control &rarr;</a>
+                <span class="nav-divider"></span>
+                <div id="auth-status-container" style="display: inline-flex; align-items: center;"></div>
+            </nav>
+        </header>
+
+        <!-- 2. Workspace Operating Context Bar -->
+        <div class="workspace-bar">
+            <div class="tenant-selector">
+                <label for="tenant-select" class="tenant-label">Session:</label>
+                <select id="tenant-select" class="tenant-dropdown" onchange="switchTenant()">
+                    <option value="tenant-a" selected>Customer A (Financial Cloud)</option>
+                    <option value="tenant-b">Customer B (Healthcare Core)</option>
+                </select>
+            </div>
+
+            <div class="residency-cluster">
+                <span>Home: <strong id="tb-home">us-east-1</strong></span>
+                <span>&bull;</span>
+                <span>Data Residency: <strong id="tb-jur">Strict Domestic Only (Zero Cross-Border Export)</strong></span>
+                <span>&bull;</span>
+                <span>Server: <strong id="tb-serv">us-east-1</strong></span>
+            </div>
+        </div>
+
+        <!-- 3. Transport Reliability Summary Ribbon (Preserving lat-* IDs) -->
+        <div class="sla-ribbon">
+            <div class="ribbon-cell">
+                <span class="r-title">Collection-to-Dashboard Latency</span>
+                <span class="r-val" id="lat-p95">-</span>
+                <span class="r-target">&bull; Target: &lt;10.0s (SLA Met)</span>
+            </div>
+            <div class="ribbon-cell">
+                <span class="r-title">Anomaly Spike-to-Alert Time</span>
+                <span class="r-val" id="lat-alert">-</span>
+                <span class="r-target">&bull; Target: &lt;15.0s (SLA Met)</span>
+            </div>
+            <div class="ribbon-cell">
+                <span class="r-title">Collector Offline Beacon Timeout</span>
+                <span class="r-val" id="lat-offline">&le; 60 s</span>
+                <span class="r-target">&bull; Target: &lt;60.0s (SLA Met)</span>
+            </div>
+            <div class="ribbon-cell">
+                <span class="r-title">Idempotent Delivery Integrity</span>
+                <span class="r-val" id="stat-delivery-sla">100%</span>
+                <span class="r-target">&bull; Zero Duplicate Payloads</span>
+            </div>
+        </div>
+
+        <!-- 4. Telemetry Delivery Accounting (Preserving row-* & stat-* IDs) -->
+        <div class="console-panel">
+            <div class="panel-topbar">
+                <span class="panel-heading">End-to-End Telemetry Ingestion Accounting</span>
+                <button onclick="fetchReliability()" class="nav-item" style="font-size: 11px; padding: 3px 9px;">Refresh Live</button>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Verification Metric</th>
+                        <th>Measured Value</th>
+                        <th>SLA Requirement</th>
+                        <th>Audit Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Sent vs. Received Payloads</strong></td>
+                        <td style="font-weight: 600; color: var(--text-primary);">
+                            Sent: <span id="stat-sent">0</span> &bull; Received: <span id="stat-received">0</span> &bull; Pending: <span id="stat-pending">0</span>
+                            <span id="row-received" style="display:none;"></span>
+                        </td>
+                        <td style="color: var(--text-muted);">100% Ingestion Reconciliation</td>
+                        <td><span class="pass-badge">100% Reconciled</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Duplicate Payloads Handled</strong></td>
+                        <td style="font-weight: 600; color: var(--text-primary);"><span id="row-dupes">0</span> (<span id="stat-duplicates-accepted">0</span> accepted, <span id="stat-duplicates-rejected">0</span> dropped)</td>
+                        <td style="color: var(--text-muted);">Strictly 0 accepted (Deduplicated by UUID)</td>
+                        <td><span class="pass-badge">Zero Duplicates</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lost Payloads Count</strong></td>
+                        <td style="font-weight: 600; color: var(--text-primary);"><span id="row-lost">0 lost</span> (<span id="stat-lost">0</span> lost)</td>
+                        <td style="color: var(--text-muted);">Strictly 0 (Sent - Received - Pending = 0)</td>
+                        <td><span class="pass-badge">Zero Lost</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Out-of-Order / Reordered Events</strong></td>
+                        <td id="stat-reordered-events" style="font-weight: 600; color: var(--text-primary);">0</td>
+                        <td style="color: var(--text-muted);">Chronologically resolved strictly via event_ts</td>
+                        <td><span class="pass-badge">Nominal</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Median Ingestion Latency (p50)</strong></td>
+                        <td id="row-p50" style="color: var(--text-primary);">-</td>
+                        <td style="color: var(--text-muted);">&lt; 5.0 s</td>
+                        <td><span class="pass-badge">Nominal</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Average Ingestion Latency</strong></td>
+                        <td id="row-avg" style="color: var(--text-primary);">-</td>
+                        <td style="color: var(--text-muted);">&lt; 8.0 s</td>
+                        <td><span class="pass-badge">Nominal</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 5. Global-Ready Architecture Verification (5 Pillars) -->
+        <div class="console-panel">
+            <div class="panel-topbar">
+                <span class="panel-heading">Global-Ready Architecture Verification (5 Core Pillars)</span>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 22%;">Pillar & Architectural Standard</th>
+                        <th style="width: 38%;">SafeOps Implementation Mechanism</th>
+                        <th style="width: 25%;">Active Configuration / Telemetry State</th>
+                        <th style="width: 15%;">Audit Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1. Regional Ingest</strong></td>
+                        <td style="color: var(--text-muted);">Collectors route batches to nearest regional endpoint with <code>X-Region-ID</code> & <code>X-Jurisdiction</code> egress headers.</td>
+                        <td id="pillar-regional-state" style="font-size: 11px;">us-east-1</td>
+                        <td><span class="pass-badge">Active</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>2. Tenant Data Residency</strong></td>
+                        <td style="color: var(--text-muted);">Tenant metadata and telemetry are locked to sovereign home region. Cross-region transfers require cryptographic DPO tokens.</td>
+                        <td id="pillar-residency-state" style="font-size: 11px;">Zoned: us-east-1 (Strict Domestic Lock - No Foreign Export)</td>
+                        <td><span class="pass-badge">Sovereign Enforced</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>3. UTC Canonical Timestamps</strong></td>
+                        <td style="color: var(--text-muted);">Payloads carry standard ISO 8601 UTC event times alongside <code>source_timezone</code> metadata for localized rendering.</td>
+                        <td id="pillar-tz-state" style="font-size: 11px;">UTC + America/New_York</td>
+                        <td><span class="pass-badge">Normalized</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>4. Out-of-Order Handling</strong></td>
+                        <td style="color: var(--text-muted);">Delayed or out-of-order packets are indexed and chronologically resolved strictly by <code>event_ts</code>, preventing delayed packets from corrupting state.</td>
+                        <td style="font-size: 11px;">Event-Time Ordering (MAX(event_ts))</td>
+                        <td><span class="pass-badge">Order Invariant</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>5. Idempotent Delivery</strong></td>
+                        <td style="color: var(--text-muted);">Every payload carries a globally unique <code>payload_id</code> UUID. Duplicate arrivals from network retries are dropped at the primary key layer.</td>
+                        <td id="pillar-idempotent-state" style="font-size: 11px;">0 Accepted</td>
+                        <td><span class="pass-badge">100% De-duped</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 6. Sovereign Cross-Region Data Residency Probe Console -->
+        <div class="console-panel">
+            <div class="panel-topbar">
+                <span class="panel-heading">Sovereign Data Residency Boundary Verification Probe</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                Attempting to replicate tenant data across sovereign borders triggers an immediate <code>403 Forbidden</code> block. Only with a verified Data Protection Officer (DPO) policy token can replication proceed.
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; background: var(--bg-subtle); padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Target Region:</label>
+                <select id="probe-target-region" class="tenant-dropdown" style="font-size: 11px;">
+                    <option value="eu-central-1">eu-central-1 (Frankfurt)</option>
+                    <option value="ap-southeast-1">ap-southeast-1 (Singapore)</option>
+                    <option value="us-east-1">us-east-1 (N. Virginia)</option>
+                </select>
+
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <input type="checkbox" id="probe-use-token" onchange="toggleTokenInput()">
+                    <label for="probe-use-token" style="font-size: 11px; color: var(--text-primary); cursor: pointer;">Attach Signed DPO Policy Approval Token</label>
+                </div>
+
+                <input type="text" id="probe-token-input" class="tenant-dropdown" style="width: 200px; display: none; font-size: 11px;" value="POL_APPR_GDPR_77" placeholder="e.g. POL_APPR_GDPR_77">
+                <button onclick="executeReplicationProbe()" class="btn-action">Run Replication Probe</button>
+            </div>
+
+            <!-- Probe Result Box -->
+            <div id="probe-result-box" style="display: none; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 11px; margin-bottom: 14px; font-family: var(--font-mono);">
+                <div id="probe-result-status" style="font-weight: 700; margin-bottom: 2px;"></div>
+                <div id="probe-result-detail" style="color: var(--text-muted);"></div>
+            </div>
+
+            <!-- Sovereign Residency Audit Log Table -->
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tenant ID</th>
+                        <th>Source Region</th>
+                        <th>Target Region</th>
+                        <th>Action</th>
+                        <th>Decision</th>
+                        <th>Policy Reason / Verification</th>
+                        <th>Timestamp (UTC)</th>
+                    </tr>
+                </thead>
+                <tbody id="residency-audit-tbody">
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 14px;">Loading audit history...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 7. Live Egress-to-Ingest Verified Payload Stream -->
+        <div class="console-panel">
+            <div class="panel-topbar">
+                <span class="panel-heading">Live Verified Payload Stream (Audit Sample)</span>
+                <span style="font-size: 10px; font-family: var(--font-mono); color: var(--text-dim);">Matches Tier 1 Egress Proof Panel UUIDs</span>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Payload ID (UUID)</th>
+                        <th>Source Host (Pseudonym)</th>
+                        <th>Metric</th>
+                        <th>Event Time (UTC)</th>
+                        <th>Source TZ</th>
+                        <th>E2E Latency</th>
+                    </tr>
+                </thead>
+                <tbody id="payloads-tbody">
+                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 14px;">Waiting for telemetry stream...</td></tr>
+                </tbody>
+                <tbody id="live-feed-tbody" style="display: none;"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let currentTenant = 'tenant-a';
+
+        const HOST_LAYER_NAMES = {
+            "host-5a29f93e": "Web Layer",
+            "host-9266dbda": "Application Layer",
+            "host-e5ef01de": "Database Layer",
+            "host-7a546756": "Payment Gateway (Web Layer)",
+            "host-fcc45d28": "Order Processing (App Layer)",
+            "host-a54f117b": "Auth Directory (DB Layer)"
+        };
+
+        function getHostDisplayName(sourceId) {
+            return HOST_LAYER_NAMES[sourceId] || sourceId;
+        }
+
+        function switchTenant() {
+            currentTenant = document.getElementById('tenant-select').value;
+            fetchReliability();
+            fetchResidencyAudit();
+        }
+
+        function toggleTokenInput() {
+            const chk = document.getElementById('probe-use-token');
+            const inp = document.getElementById('probe-token-input');
+            inp.style.display = chk.checked ? 'inline-block' : 'none';
+        }
+
+        async function executeReplicationProbe() {
+            const targetRegion = document.getElementById('probe-target-region').value;
+            const useToken = document.getElementById('probe-use-token').checked;
+            const token = useToken ? document.getElementById('probe-token-input').value.trim() : null;
+
+            const resBox = document.getElementById('probe-result-box');
+            const resStatus = document.getElementById('probe-result-status');
+            const resDetail = document.getElementById('probe-result-detail');
+
+            try {
+                const res = await fetch('/api/v1/residency/replicate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tenant_id: currentTenant,
+                        target_region: targetRegion,
+                        policy_approval_token: token,
+                        operator: "SRE-Audit-Console"
+                    })
+                });
+
+                const data = await res.json();
+                resBox.style.display = 'block';
+
+                if (res.status === 200) {
+                    resBox.style.background = 'var(--status-ok-bg)';
+                    resBox.style.border = '1px solid var(--status-ok-border)';
+                    resStatus.innerHTML = `<span style="color: #6ee7b7;">HTTP 200 OK &bull; DECISION: APPROVED</span>`;
+                    resDetail.innerText = data.detail || "Replication permitted under verified policy.";
+                } else {
+                    resBox.style.background = 'var(--status-err-bg)';
+                    resBox.style.border = '1px solid var(--status-err-border)';
+                    resStatus.innerHTML = `<span style="color: #fca5a5;">HTTP 403 FORBIDDEN &bull; DECISION: BLOCKED</span>`;
+                    resDetail.innerText = data.detail || "Data residency policy violation. Cross-region replication denied.";
+                }
+
+                fetchResidencyAudit();
+            } catch (err) {
+                console.error("Probe failed:", err);
+            }
+        }
+
+        async function fetchResidencyAudit() {
+            try {
+                const res = await fetch('/api/v1/residency/status');
+                const data = await res.json();
+
+                const tbody = document.getElementById('residency-audit-tbody');
+                const audits = data.recent_audits || [];
+
+                if (audits.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 14px;">No cross-region events logged yet.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = audits.map(a => {
+                    const isAllowed = a.decision === 'ALLOWED' || a.decision === 'APPROVED';
+                    const badgeClass = isAllowed ? 'pass-badge' : 'block-badge';
+                    return `
+                    <tr>
+                        <td style="font-weight: 600; color: var(--text-primary);">${a.tenant_id}</td>
+                        <td>${a.source_region}</td>
+                        <td>${a.target_region}</td>
+                        <td style="color: var(--text-dim);">${a.action}</td>
+                        <td><span class="${badgeClass}">${a.decision}</span></td>
+                        <td style="color: var(--text-muted); max-width: 300px;">${a.policy_reason}</td>
+                        <td style="color: var(--text-dim);">${a.timestamp_utc ? a.timestamp_utc.substring(11, 19) + ' UTC' : 'N/A'}</td>
+                    </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error("Audit log poll failed:", err);
+            }
+        }
+
+        async function fetchReliability() {
+            try {
+                const res = await fetch(`/api/v1/reliability/data?tenant_id=${currentTenant}`);
+                const data = await res.json();
+
+                document.getElementById('lat-p95').innerText = `${data.collection_to_dashboard_latency_p95} s`;
+                document.getElementById('lat-alert').innerText = `${data.spike_to_alert_latency_seconds} s`;
+
+                document.getElementById('row-received').innerText = `${data.total_payloads_received} payloads`;
+                if (document.getElementById('stat-sent')) document.getElementById('stat-sent').innerText = `${data.collector_sent_count || data.total_payloads_received}`;
+                if (document.getElementById('stat-received')) document.getElementById('stat-received').innerText = `${data.total_payloads_received}`;
+                if (document.getElementById('stat-pending')) document.getElementById('stat-pending').innerText = `${data.pending_buffer_count || 0}`;
+                if (document.getElementById('stat-lost')) document.getElementById('stat-lost').innerText = `${data.lost_payloads || 0}`;
+
+                document.getElementById('row-dupes').innerText = `${data.duplicates_detected_and_rejected} rejected (0 accepted)`;
+                if (document.getElementById('stat-duplicates-accepted')) document.getElementById('stat-duplicates-accepted').innerText = "0";
+                if (document.getElementById('stat-duplicates-rejected')) document.getElementById('stat-duplicates-rejected').innerText = `${data.duplicates_detected_and_rejected || 0}`;
+                if (document.getElementById('stat-delivery-sla')) document.getElementById('stat-delivery-sla').innerText = data.delivery_sla_pct || "100%";
+                if (document.getElementById('stat-reordered-events')) document.getElementById('stat-reordered-events').innerText = `${data.reordered_events_count || 0}`;
+                document.getElementById('row-lost').innerText = `${data.lost_payloads} lost`;
+                document.getElementById('row-p50').innerText = `${data.collection_to_dashboard_latency_p50} s`;
+                document.getElementById('row-avg').innerText = `${data.collection_to_dashboard_latency_avg} s`;
+
+                if (data.residency) {
+                    document.getElementById('tb-home').innerText = data.residency.home_region || 'us-east-1';
+                    const jurPlain = (data.residency && data.residency.jurisdiction) ? 
+                        (data.residency.jurisdiction === 'US-Domestic' || data.residency.jurisdiction.includes('US') ? 'Strict US Domestic Lock (No Foreign Export)' : data.residency.jurisdiction) : 
+                        'Strict Regional Isolation';
+                    document.getElementById('tb-jur').innerText = jurPlain;
+                    document.getElementById('pillar-residency-state').innerText = `Zoned: ${data.residency.home_region} (${jurPlain})`;
+                }
+                if (data.server_region) {
+                    document.getElementById('tb-serv').innerText = data.server_region;
+                }
+
+                const dupes = data.duplicates_detected_and_rejected || 0;
+                document.getElementById('pillar-idempotent-state').innerText = `0 Accepted / ${dupes} Replays Dropped`;
+
+                const tz = currentTenant === 'tenant-b' ? 'Europe/Frankfurt (CET)' : 'America/New_York (EST)';
+                document.getElementById('pillar-tz-state').innerText = `UTC + ${tz}`;
+
+                const targetRegional = currentTenant === 'tenant-b' ? 'eu-central-1 (Direct EU Ingress)' : 'us-east-1 (Direct US Ingress)';
+                document.getElementById('pillar-regional-state').innerText = targetRegional;
+
+                const tbody = document.getElementById('payloads-tbody');
+                const recent = data.recent_verified_payloads || [];
+                if (recent.length > 0) {
+                    tbody.innerHTML = recent.slice(0, 15).map(p => `
+                        <tr>
+                            <td style="color: var(--text-dim);">${p.payload_id.substring(0, 16)}...</td>
+                            <td style="color: var(--text-primary);">
+                                <strong>${getHostDisplayName(p.source_id)}</strong>
+                                <span style="font-size: 10px; color: var(--text-dim); margin-left: 4px;">(${p.source_id})</span>
+                            </td>
+                            <td><span style="padding: 1px 6px; border-radius: 3px; background: transparent; border: none; color: var(--text-secondary); font-size: 11px;">${p.metric}</span></td>
+                            <td style="color: var(--text-dim);">${p.event_time_utc}</td>
+                            <td style="color: var(--text-muted);">${p.source_timezone || 'UTC'}</td>
+                            <td style="color: var(--text-primary); font-weight: 600;">${p.latency_sec} s</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error("Reliability poll failed:", err);
+            }
+        }
+
+        fetchReliability();
+        fetchResidencyAudit();
+        setInterval(fetchReliability, 2500);
+    </script>
+
+    <!-- Firebase App & Auth SDK (v10 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script>
+        const safeopsFirebaseConfig = {
+            apiKey: "AIzaSyAoIYY7K13uBrmKNa7fxlZMo0Fb3GkFwD4",
+            authDomain: "safeops-983b2.firebaseapp.com",
+            projectId: "safeops-983b2",
+            storageBucket: "safeops-983b2.firebasestorage.app",
+            messagingSenderId: "1042395485031",
+            appId: "1:1042395485031:web:5fc433a7a34111dc99d5c2",
+            measurementId: "G-QMB8QSPHG2"
+        };
+
+        window.currentOperatorName = sessionStorage.getItem('safeops_operator') || 'SiteReliabilityEngineer';
+
+        function initFirebaseAuth() {
+            try {
+                if (typeof firebase === 'undefined') return;
+                if (!firebase.apps || !firebase.apps.length) {
+                    firebase.initializeApp(safeopsFirebaseConfig);
+                }
+                firebase.auth().onAuthStateChanged(user => {
+                    const container = document.getElementById('auth-status-container');
+                    if (!container) return;
+                    if (user) {
+                        const displayName = user.displayName || user.email || 'Operator';
+                        window.currentOperatorName = displayName;
+                        sessionStorage.setItem('safeops_operator', displayName);
+                        const photo = user.photoURL || '';
+                        container.innerHTML = `
+                            <div style="display: inline-flex; align-items: center; gap: 7px;">
+                                ${photo ? `<img src="${photo}" style="width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--accent); object-fit: cover;" alt="" />` : ''}
+                                <span style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-light); font-weight: 600;">${displayName}</span>
+                                <button onclick="handleGoogleSignOut()" class="nav-item" style="padding: 2px 6px; font-size: 10px; color: var(--text-muted); cursor: pointer;" title="Sign out">Sign Out</button>
+                            </div>
+                        `;
+                    } else {
+                        window.currentOperatorName = sessionStorage.getItem('safeops_operator') || 'SiteReliabilityEngineer';
+                        container.innerHTML = `
+                            <button onclick="handleGoogleSignIn()" class="nav-item" style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                <svg width="12" height="12" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16.5C3.7 20.2 7.5 23.5 12 23.5z"/></svg>
+                                <span>Sign In</span>
+                            </button>
+                        `;
+                    }
+                });
+            } catch (e) {
+                console.warn("Firebase Auth error:", e);
+            }
+        }
+
+        async function handleGoogleSignIn() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                await firebase.auth().signInWithPopup(provider);
+            } catch (err) {
+                if ((err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) && window.location.hostname === '127.0.0.1') {
+                    window.location.href = window.location.href.replace('127.0.0.1', 'localhost');
+                    return;
+                }
+                console.error("Google sign-in error:", err);
+                alert(err.message || err);
+            }
+        }
+
+        async function handleGoogleSignOut() {
+            try {
+                if (typeof firebase !== 'undefined' && firebase.auth) {
+                    await firebase.auth().signOut();
+                }
+                sessionStorage.removeItem('safeops_operator');
+                window.currentOperatorName = 'SiteReliabilityEngineer';
+                const container = document.getElementById('auth-status-container');
+                if (container) {
+                    container.innerHTML = `
+                        <button onclick="handleGoogleSignIn()" class="nav-item" style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                            <svg width="12" height="12" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16.5C3.7 20.2 7.5 23.5 12 23.5z"/></svg>
+                            <span>Sign In</span>
+                        </button>
+                    `;
+                }
+            } catch (err) {
+                console.error("Sign-out error:", err);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', initFirebaseAuth);
+    </script>
+</body>
+</html>

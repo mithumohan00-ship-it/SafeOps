@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
+    <title>SafeOps | Cloud Infrastructure Intelligence</title>
+    <style>
+        :root {
+            --bg-base: #0a0a0a;
+            --bg-surface: #111213;
+            --bg-elevated: #161718;
+            --bg-subtle: #1a1b1c;
+            --border: #222426;
+            --border-hover: #333638;
+            --border-focus: #ba7924;
+            --text-primary: #f0f2f2;
+            --text-secondary: #c0c4c4;
+            --text-muted: #7c7f80;
+            --text-dim: #4d5052;
+            
+            --accent: #ba7924;
+            --accent-light: #e9c28f;
+            --accent-muted: rgba(186, 121, 36, 0.12);
+            --accent-border: rgba(186, 121, 36, 0.35);
+
+            --status-ok: #10b981;
+            --status-ok-bg: rgba(16, 185, 129, 0.08);
+            --status-ok-border: rgba(16, 185, 129, 0.28);
+            --status-good: #06b6d4;
+            --status-good-bg: rgba(6, 182, 212, 0.08);
+            --status-good-border: rgba(6, 182, 212, 0.28);
+            --status-warn: #f59e0b;
+            --status-warn-bg: rgba(245, 158, 11, 0.08);
+            --status-warn-border: rgba(245, 158, 11, 0.28);
+            --status-err: #ef4444;
+            --status-err-bg: rgba(239, 68, 68, 0.08);
+            --status-err-border: rgba(239, 68, 68, 0.28);
+
+            --radius-sm: 2px;
+            --radius-md: 2px;
+            --radius-lg: 2px;
+
+            --font-heading: 'Unbounded', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            --transition-fast: 0.12s ease-out;
+            --transition-smooth: 0.2s ease-out;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            min-height: 100vh;
+            padding: 0 32px 32px 32px;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
+        }
+
+        .layout-container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        /* 1. Global Application Shell Header (Sticky Blur on Scroll) */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            transition: background var(--transition-smooth), border-color var(--transition-smooth), backdrop-filter var(--transition-smooth);
+        }
+
+        .header-scrolled {
+            background: rgba(10, 10, 10, 0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom-color: var(--border-hover);
+        }
+
+        .brand-cluster {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-mark {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-mark svg {
+            width: 15px;
+            height: 15px;
+            fill: var(--accent);
+        }
+
+        .brand-name {
+            font-family: var(--font-heading);
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tier-tag {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .nav-cluster {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+        }
+
+        .nav-item {
+            text-decoration: none;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            color: var(--text-primary);
+            background: var(--bg-elevated);
+            border-color: var(--border-hover);
+        }
+
+        .nav-item.active {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        .nav-divider {
+            width: 1px;
+            height: 18px;
+            background: var(--border);
+            margin: 0 4px;
+        }
+
+        .nav-ext {
+            color: var(--text-muted);
+        }
+
+        .nav-ext:hover {
+            color: var(--text-primary);
+            border-color: var(--border-hover);
+        }
+
+        /* 2. Workspace & Operating Context Bar */
+        .workspace-bar {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .context-controls {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .tenant-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tenant-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .tenant-dropdown {
+            background: var(--bg-base);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+            transition: border-color var(--transition-fast);
+        }
+
+        .tenant-dropdown:hover { border-color: var(--border-hover); }
+        .tenant-dropdown:focus { border-color: var(--border-focus); }
+
+        .tenant-chip {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+
+        .residency-pills {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+
+        .residency-pills strong { color: var(--text-secondary); }
+        .residency-sep { color: var(--border); }
+
+        /* Collector Status Beacon */
+        .collector-beacon {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            background: transparent;
+            border: none;
+            padding: 0;
+            transition: all var(--transition-fast);
+        }
+
+        .status-online {
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+        }
+
+        .status-offline {
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+        }
+
+        .beacon-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-online .beacon-dot {
+            background-color: var(--status-ok);
+        }
+
+        .status-offline .beacon-dot {
+            background-color: var(--status-err);
+        }
+
+        /* 3. Stale Data Warning */
+        .alert-stale {
+            background: var(--status-warn-bg);
+            border: 1px solid var(--status-warn-border);
+            color: var(--text-primary);
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+            font-size: 12px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 3b. Live SLA & Performance Verification Panel */
+        .live-sla-panel {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 14px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 18px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .live-sla-panel { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 640px) {
+            .live-sla-panel { grid-template-columns: 1fr; }
+        }
+
+        .sla-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .sla-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .sla-value {
+            font-family: var(--font-heading);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .sla-sub {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        /* 4. Compact Infrastructure Operational Health Summary */
+        .health-summary-strip {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .summary-label-group {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .summary-title {
+            font-family: var(--font-heading);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-primary);
+        }
+
+        .summary-counts {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .health-metric-unit {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+
+        .h-tag { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+        .h-val { font-size: 18px; font-weight: 700; font-family: var(--font-heading); color: var(--text-primary); font-variant-numeric: tabular-nums; }
+        .h-val.val-ok { color: var(--status-ok); }
+        .h-val.val-fair { color: var(--status-warn); }
+        .h-val.val-poor { color: var(--status-err); }
+
+        .health-progress-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            max-width: 380px;
+        }
+
+        .health-progress-bar {
+            height: 4px;
+            border-radius: var(--radius-sm);
+            background: var(--border);
+            overflow: hidden;
+            display: flex;
+            flex: 1;
+        }
+
+        .hp-fill-ok { background: var(--status-ok); }
+        .hp-fill-fair { background: var(--status-warn); }
+        .hp-fill-poor { background: var(--status-err); }
+
+        .eval-stamp {
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-dim);
+        }
+
+        /* 5. Main Infrastructure Topology View (Web -> App -> DB) */
+        .topology-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 14px;
+        }
+
+        .topology-heading {
+            font-family: var(--font-heading);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--accent);
+        }
+
+        .topology-caption {
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-dim);
+        }
+
+        .topology-flow-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto 1fr;
+            gap: 14px;
+            align-items: stretch;
+            margin-bottom: 28px;
+        }
+
+        @media (max-width: 1180px) {
+            .topology-flow-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+            .flow-connector { display: none; }
+        }
+
+        .flow-connector {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--border-hover);
+            padding: 0 4px;
+        }
+
+        .flow-connector svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+        }
+
+        .tier-node-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 14px;
+            position: relative;
+            transition: border-color var(--transition-fast);
+        }
+
+        .tier-node-card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .tier-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .tier-spec-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            margin-bottom: 2px;
+        }
+
+        .tier-layer-name {
+            font-family: var(--font-heading);
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+
+        .tier-sub-meta {
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* 4 Distinct Health State Badges */
+        .state-badge {
+            font-family: var(--font-mono);
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .state-exc {
+            background: var(--status-ok-bg);
+            color: var(--status-ok);
+            border: 1px solid var(--status-ok-border);
+        }
+
+        .state-good {
+            background: var(--status-good-bg);
+            color: var(--status-good);
+            border: 1px solid var(--status-good-border);
+        }
+
+        .state-fair {
+            background: var(--status-warn-bg);
+            color: var(--status-warn);
+            border: 1px solid var(--status-warn-border);
+        }
+
+        .state-poor {
+            background: var(--status-err-bg);
+            color: var(--status-err);
+            border: 1px solid var(--status-err-border);
+        }
+
+        /* CPU Lifeline ECG Heart-Monitor */
+        .ecg-lifeline-block {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            margin-bottom: 2px;
+        }
+
+        .ecg-meta-col {
+            display: flex;
+            flex-direction: column;
+            min-width: 86px;
+            gap: 2px;
+        }
+
+        .ecg-label-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ecg-metric-title {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--text-dim);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+        }
+
+        .ecg-status-tag {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            padding: 1px 5px;
+            border-radius: 2px;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            background: var(--bg-surface);
+            text-transform: uppercase;
+            transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .ecg-status-tag.tag-normal {
+            border-color: var(--border);
+            color: var(--text-muted);
+            background: var(--bg-surface);
+        }
+
+        .ecg-status-tag.tag-anomaly {
+            border-color: var(--status-err-border);
+            color: var(--status-err);
+            background: var(--status-err-bg);
+        }
+
+        .ecg-cpu-val {
+            font-family: var(--font-mono);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            font-variant-numeric: tabular-nums;
+            transition: color 0.2s ease;
+        }
+
+        .ecg-canvas-wrap {
+            flex: 1;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            position: relative;
+        }
+
+        .ecg-canvas {
+            width: 100%;
+            max-width: 180px;
+            height: 44px;
+            display: block;
+        }
+
+        /* Compact Telemetry Rows */
+        .telemetry-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tel-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            padding: 2px 0;
+        }
+
+        .tel-name {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tel-val-cluster {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .tel-sparkbar {
+            width: 48px;
+            height: 4px;
+            background: var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        .tel-sparkfill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: var(--radius-sm);
+        }
+
+        .tel-subgrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .sub-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 11px;
+        }
+
+        .sub-name { color: var(--text-dim); }
+        .sub-val { font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary); }
+
+        /* Security Alert Drawer */
+        .sec-alert-drawer {
+            background: var(--status-err-bg);
+            border: 1px solid var(--status-err-border);
+            border-radius: var(--radius-sm);
+            padding: 6px 10px;
+            font-size: 11px;
+            color: #fca5a5;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+
+        /* 6. Event History Stream */
+        .history-panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+        }
+
+        .history-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .history-title {
+            font-family: var(--font-heading);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-primary);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .history-table th {
+            text-align: left;
+            padding: 8px 12px;
+            background: var(--bg-base);
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .history-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+
+        .history-table tr:hover td {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+
+        .flow-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+        }
+
+        @media (max-width: 960px) {
+            .app-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .nav-cluster {
+                width: 100%;
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding-bottom: 6px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="layout-container">
+        <!-- 1. Global Shell Navigation -->
+        <header class="app-header">
+            <div class="brand-cluster">
+                <div class="brand-mark">
+                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
+                <div class="brand-name">
+                    SafeOps Cloud
+                    <span class="tier-tag">SAAS / CLOUD</span>
+                    <span class="tenant-chip" id="active-tenant-badge">Tenant A</span>
+                </div>
+            </div>
+            <nav class="nav-cluster">
+                <a href="/dashboard" class="nav-item active">Fleet Overview</a>
+                <a href="/incidents" class="nav-item">AIOps Incidents</a>
+                <a href="/reliability" class="nav-item">Reliability SLA</a>
+                <span class="nav-divider"></span>
+                <a href="http://127.0.0.1:8001/egress" target="_blank" class="nav-item nav-ext">Egress Proof (Port 8001) &rarr;</a>
+                <a href="http://127.0.0.1:8001/control" target="_blank" class="nav-item nav-ext">Demo Control &rarr;</a>
+                <span class="nav-divider"></span>
+                <div id="auth-status-container" style="display: inline-flex; align-items: center;"></div>
+            </nav>
+        </header>
+
+        <!-- 2. Workspace & Operating Context Bar -->
+        <div class="workspace-bar">
+            <div class="context-controls">
+                <div class="tenant-selector">
+                    <label for="tenant-select" class="tenant-label">Session:</label>
+                    <select id="tenant-select" class="tenant-dropdown" onchange="switchTenant()">
+                        <option value="tenant-a" selected>Customer A (Financial Cloud)</option>
+                        <option value="tenant-b">Customer B (Healthcare Core)</option>
+                    </select>
+                </div>
+
+                <div class="residency-pills">
+                    <span>Region: <strong id="res-home">us-east-1</strong></span>
+                    <span class="residency-sep">&bull;</span>
+                    <span>Residency Rule: <strong id="res-jurisdiction">Strict Domestic Only (Zero Cross-Border Export)</strong></span>
+                    <span class="residency-sep">&bull;</span>
+                    <span>Node: <strong id="res-node">us-east-1</strong></span>
+                </div>
+            </div>
+
+            <div id="collector-status-pill" class="collector-beacon status-online">
+                <span class="beacon-dot" id="col-pulse"></span>
+                <span id="col-status-text">Collector Online</span>
+            </div>
+        </div>
+
+        <!-- 3. Stale Data Notice -->
+        <div id="stale-banner" class="alert-stale">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div>
+                <strong>Stale Data Alert:</strong> Telemetry updates paused >30s. Host health downgraded per SLA policy.
+            </div>
+        </div>
+
+        <!-- 3b. Live Real-Time SLA & Accounting Panel -->
+        <div class="live-sla-panel">
+            <div class="sla-cell">
+                <span class="sla-label">Event &rarr; Dashboard (p95)</span>
+                <span class="sla-value" id="live-p95">-</span>
+                <span class="sla-sub">&bull; Target &lt; 10.0s (SLA Met)</span>
+            </div>
+            <div class="sla-cell">
+                <span class="sla-label">Spike &rarr; Alert Latency</span>
+                <span class="sla-value" id="live-alert">-</span>
+                <span class="sla-sub">&bull; Target &lt; 15.0s (SLA Met)</span>
+            </div>
+            <div class="sla-cell">
+                <span class="sla-label">Offline Detection Clock</span>
+                <span class="sla-value" id="live-offline">&le; 60 s</span>
+                <span class="sla-sub">&bull; Threshold: 60s Timeout</span>
+            </div>
+            <div class="sla-cell">
+                <span class="sla-label">Sent vs Received Ingest</span>
+                <span class="sla-value" id="live-sent-recv">-</span>
+                <span class="sla-sub">&bull; Verified Ingestion</span>
+            </div>
+            <div class="sla-cell">
+                <span class="sla-label">Lost Payloads</span>
+                <span class="sla-value" id="live-lost" style="color: #34d399;">0 Lost</span>
+                <span class="sla-sub">&bull; Store &amp; Forward Buffer</span>
+            </div>
+            <div class="sla-cell">
+                <span class="sla-label">Duplicates Rejected</span>
+                <span class="sla-value" id="live-dupes">0 Rejected</span>
+                <span class="sla-sub">&bull; 0 Accepted (Idempotent)</span>
+            </div>
+        </div>
+
+        <!-- 4. Compact Infrastructure Operational Health Summary -->
+        <div class="health-summary-strip">
+            <div class="summary-label-group">
+                <span class="summary-title">Infrastructure Health</span>
+                <span style="font-size: 11px; color: var(--text-dim);">[<span id="ov-hosts">3</span> Hosts Active]</span>
+            </div>
+
+            <div class="summary-counts">
+                <div class="health-metric-unit">
+                    <span class="h-tag">Excellent/Good</span>
+                    <span class="h-val val-ok" id="ov-healthy">-</span>
+                </div>
+                <div class="health-metric-unit">
+                    <span class="h-tag">Fair</span>
+                    <span class="h-val val-fair" id="ov-fair">-</span>
+                </div>
+                <div class="health-metric-unit">
+                    <span class="h-tag">Poor/Alert</span>
+                    <span class="h-val val-poor" id="ov-poor">-</span>
+                </div>
+            </div>
+
+            <div class="health-progress-wrap">
+                <div class="health-progress-bar">
+                    <div id="bar-fill-ok" class="hp-fill-ok" style="width: 100%;"></div>
+                    <div id="bar-fill-fair" class="hp-fill-fair" style="width: 0%;"></div>
+                    <div id="bar-fill-poor" class="hp-fill-poor" style="width: 0%;"></div>
+                </div>
+                <span class="eval-stamp" id="eval-status">Nominal</span>
+            </div>
+        </div>
+
+        <!-- 5. Main Infrastructure Topology View (Web -> App -> DB) -->
+        <div class="topology-section-header">
+            <span class="topology-heading">Tiered Infrastructure Topology</span>
+            <span class="topology-caption">Deterministic Pseudonyms &bull; Local Time Normalized</span>
+        </div>
+
+        <!-- Target Topology Container (Preserving id="hosts-container") -->
+        <div id="hosts-container" class="topology-flow-grid">
+            <div style="grid-column: 1 / -1; text-align: center; padding: 32px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-muted);">
+                Initializing topology map...
+            </div>
+        </div>
+
+        <!-- 6. State Change History Log -->
+        <div class="history-panel">
+            <div class="history-topbar">
+                <span class="history-title">State Change Audit Stream</span>
+                <button onclick="fetchDashboardData()" class="nav-item" style="font-size: 11px; padding: 3px 9px;">Refresh</button>
+            </div>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Host Layer (Pseudonym)</th>
+                        <th>Metric</th>
+                        <th>Transition</th>
+                        <th>Threshold Trigger Reason</th>
+                        <th>Event Time (UTC)</th>
+                    </tr>
+                </thead>
+                <tbody id="history-tbody">
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">No state changes recorded yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let currentTenant = 'tenant-a';
+        let renderedHostTopologyKey = '';
+        const prevMetricValues = {};
+
+        const HOST_LAYER_NAMES = {
+            "host-5a29f93e": "Web Layer",
+            "host-9266dbda": "Application Layer",
+            "host-e5ef01de": "Database Layer",
+            "host-7a546756": "Payment Gateway (Web Layer)",
+            "host-fcc45d28": "Order Processing (App Layer)",
+            "host-a54f117b": "Auth Directory (DB Layer)"
+        };
+
+        const LAYER_SPECS = {
+            "Web Layer": "WEB TIER 01",
+            "Application Layer": "APP TIER 02",
+            "Database Layer": "DATA TIER 03",
+            "Payment Gateway (Web Layer)": "WEB TIER 01",
+            "Order Processing (App Layer)": "APP TIER 02",
+            "Auth Directory (DB Layer)": "DATA TIER 03"
+        };
+
+        function getHostDisplayName(sourceId) {
+            return HOST_LAYER_NAMES[sourceId] || sourceId;
+        }
+
+        function switchTenant() {
+            currentTenant = document.getElementById('tenant-select').value;
+            document.getElementById('active-tenant-badge').innerText = currentTenant === 'tenant-a' ? 'Tenant A' : 'Tenant B';
+            renderedHostTopologyKey = '';
+            fetchDashboardData();
+        }
+
+        async function fetchDashboardData() {
+            try {
+                const res = await fetch(`/api/v1/dashboard/data?tenant_id=${currentTenant}`);
+                const data = await res.json();
+
+                if (data.residency) {
+                    document.getElementById('res-home').innerText = data.residency.home_region || 'us-east-1';
+                    const jurPlain = (data.residency && data.residency.jurisdiction) ? 
+                        (data.residency.jurisdiction === 'US-Domestic' || data.residency.jurisdiction.includes('US') ? 'Strict US Domestic Lock (No Foreign Export)' : data.residency.jurisdiction) : 
+                        'Strict Regional Isolation';
+                    document.getElementById('res-jurisdiction').innerText = jurPlain;
+                }
+                if (data.server_region) {
+                    document.getElementById('res-node').innerText = data.server_region;
+                }
+
+                if (data.reliability) {
+                    const p95 = data.reliability.collection_to_dashboard_latency_p95;
+                    const alertLat = data.reliability.spike_to_alert_latency_seconds;
+                    const recv = data.reliability.total_payloads_received || 0;
+                    const dupes = data.reliability.duplicates_detected_and_rejected || 0;
+                    document.getElementById('live-p95').innerText = `${p95} s`;
+                    document.getElementById('live-alert').innerText = `${alertLat} s`;
+                    document.getElementById('live-sent-recv').innerText = `${recv.toLocaleString()} pkts`;
+                    document.getElementById('live-lost').innerText = `${data.reliability.lost_payloads || 0} Lost`;
+                    document.getElementById('live-dupes').innerText = `${dupes} Rejected`;
+                }
+                if (data.collector_status) {
+                    const secs = data.collector_status.seconds_since_heartbeat !== undefined ? Math.round(data.collector_status.seconds_since_heartbeat) : 0;
+                    const st = data.collector_status.is_offline ? 'OFFLINE' : 'ONLINE';
+                    document.getElementById('live-offline').innerText = `${secs}s (${st})`;
+                }
+
+                renderCollectorStatus(data.collector_status);
+                renderOverview(data.overview);
+                renderHostsTopology(data.hosts);
+                renderHistory(data.history);
+            } catch (err) {
+                console.error("Dashboard poll failed:", err);
+            }
+        }
+
+        function renderCollectorStatus(status) {
+            const pill = document.getElementById('collector-status-pill');
+            const text = document.getElementById('col-status-text');
+            if (!status || status.is_offline) {
+                pill.className = "collector-beacon status-offline";
+                const lastSeen = status && status.last_heartbeat_utc ? status.last_heartbeat_utc.substring(11, 19) + ' UTC' : 'Never';
+                const measuredSec = status && status.seconds_since_heartbeat ? `${status.seconds_since_heartbeat}s` : '>45s';
+                text.innerHTML = `<span style="color: var(--status-err); font-weight: 700;">Collector OFFLINE (POOR)</span> &bull; Detected in ${measuredSec} without beacon &bull; Last: ${lastSeen}`;
+            } else {
+                pill.className = "collector-beacon status-online";
+                const lastSeen = status.last_heartbeat_utc ? status.last_heartbeat_utc.substring(11, 19) + ' UTC' : 'Just now';
+                const cpu = status.cpu_percent !== undefined ? `${status.cpu_percent}%` : 'N/A';
+                const mem = status.memory_percent !== undefined ? `${status.memory_percent}%` : 'N/A';
+                text.innerHTML = `Collector ONLINE &bull; CPU: ${cpu} &bull; RAM: ${mem} &bull; Last: ${lastSeen}`;
+            }
+        }
+
+        function renderOverview(ov) {
+            if (!ov) return;
+            const total = ov.total_hosts || 0;
+            const healthy = ov.healthy_hosts || 0;
+            const fair = ov.fair_hosts || 0;
+            const poor = ov.poor_hosts || 0;
+
+            document.getElementById('ov-hosts').innerText = total;
+            document.getElementById('ov-healthy').innerText = healthy;
+            document.getElementById('ov-fair').innerText = fair;
+            document.getElementById('ov-poor').innerText = poor;
+
+            const staleBanner = document.getElementById('stale-banner');
+            staleBanner.style.display = ov.has_stale_data ? 'flex' : 'none';
+
+            if (total > 0) {
+                const okPct = Math.round((healthy / total) * 100);
+                const fairPct = Math.round((fair / total) * 100);
+                const poorPct = Math.round((poor / total) * 100);
+                document.getElementById('bar-fill-ok').style.width = okPct + '%';
+                document.getElementById('bar-fill-fair').style.width = fairPct + '%';
+                document.getElementById('bar-fill-poor').style.width = poorPct + '%';
+                document.getElementById('eval-status').innerText = poor > 0 ? `${poor} Alert` : (fair > 0 ? `${fair} Warning` : '100% Nominal');
+            }
+        }
+
+        // Targeted DOM updates to eliminate full-page re-rendering flickers
+        function renderHostsTopology(hosts) {
+            const container = document.getElementById('hosts-container');
+            const hostKeys = Object.keys(hosts || {});
+
+            if (hostKeys.length === 0) {
+                container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 32px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-muted);">Waiting for telemetry stream from collector...</div>`;
+                renderedHostTopologyKey = '';
+                return;
+            }
+
+            const currentKey = currentTenant + ':' + hostKeys.sort().join(',');
+
+            // 1. Build topology skeleton once if key changed
+            if (renderedHostTopologyKey !== currentKey) {
+                renderedHostTopologyKey = currentKey;
+                let html = '';
+
+                hostKeys.forEach((hid, idx) => {
+                    const h = hosts[hid];
+                    const layerName = getHostDisplayName(h.source_id);
+                    const tierSpec = LAYER_SPECS[layerName] || `TIER 0${idx+1}`;
+
+                    html += `
+                    <div class="tier-node-card" id="node-${hid}">
+                        <div class="tier-topbar">
+                            <div>
+                                <div class="tier-spec-title">${tierSpec}</div>
+                                <div class="tier-layer-name">${layerName}</div>
+                                <div class="tier-sub-meta">
+                                    <span>${h.source_id}</span> &bull; <span id="tz-${hid}">${h.source_timezone || 'UTC'}</span>
+                                </div>
+                            </div>
+                            <span class="state-badge" id="badge-${hid}">-</span>
+                        </div>
+
+                        <!-- CPU Lifeline ECG Monitor -->
+                        <div class="ecg-lifeline-block" id="ecg-block-${hid}">
+                            <div class="ecg-meta-col">
+                                <div class="ecg-label-row">
+                                    <span class="ecg-metric-title">CPU LIFELINE</span>
+                                    <span class="ecg-status-tag tag-normal" id="ecg-tag-${hid}">NORMAL</span>
+                                </div>
+                                <div class="ecg-cpu-val" id="ecg-cpu-${hid}">--%</div>
+                            </div>
+                            <div class="ecg-canvas-wrap">
+                                <canvas class="ecg-canvas" id="ecg-canvas-${hid}" width="180" height="44"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="telemetry-rows">
+                            <!-- CPU Row -->
+                            <div class="tel-row">
+                                <span class="tel-name">CPU Load</span>
+                                <div class="tel-val-cluster">
+                                    <span id="val-cpu-${hid}">-</span>
+                                    <div class="tel-sparkbar">
+                                        <div class="tel-sparkfill" id="bar-cpu-${hid}" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Memory Row -->
+                            <div class="tel-row">
+                                <span class="tel-name">Memory</span>
+                                <div class="tel-val-cluster">
+                                    <span id="val-mem-${hid}">-</span>
+                                    <div class="tel-sparkbar">
+                                        <div class="tel-sparkfill" id="bar-mem-${hid}" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Network Subgrid -->
+                            <div class="tel-subgrid">
+                                <div class="sub-metric">
+                                    <span class="sub-name">Latency</span>
+                                    <span class="sub-val" id="val-lat-${hid}">-</span>
+                                </div>
+                                <div class="sub-metric">
+                                    <span class="sub-name">Loss</span>
+                                    <span class="sub-val" id="val-loss-${hid}">-</span>
+                                </div>
+                                <div class="sub-metric">
+                                    <span class="sub-name">Bandwidth</span>
+                                    <span class="sub-val" id="val-bw-${hid}">-</span>
+                                </div>
+                                <div class="sub-metric">
+                                    <span class="sub-name">Daemon</span>
+                                    <span class="sub-val" id="val-svc-${hid}">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Security Alert Drawer -->
+                        <div class="sec-alert-drawer" id="sec-drawer-${hid}">
+                            <span>Auth Anomaly</span>
+                            <span id="sec-val-${hid}">-</span>
+                        </div>
+                    </div>
+                    `;
+
+                    // Add animated connector between nodes (except last)
+                    if (idx < hostKeys.length - 1) {
+                        html += `
+                        <div class="flow-connector">
+                            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                        </div>
+                        `;
+                    }
+                });
+
+                container.innerHTML = html;
+            }
+
+            // 2. Perform targeted micro-updates without innerHTML reconstruction
+            hostKeys.forEach(hid => {
+                const h = hosts[hid];
+                const state = h.overall_health || 'GOOD';
+                const tagClass = state === 'POOR' ? 'state-poor' : (state === 'FAIR' ? 'state-fair' : (state === 'EXCELLENT' ? 'state-exc' : 'state-good'));
+                const m = h.metrics || {};
+
+                // Update badge
+                const badgeEl = document.getElementById(`badge-${hid}`);
+                if (badgeEl) {
+                    badgeEl.className = `state-badge ${tagClass}`;
+                    badgeEl.innerText = state;
+                }
+
+                // Update CPU
+                const cpuVal = m.cpu_usage_pct ? m.cpu_usage_pct.value : null;
+                updateMetricText(`val-cpu-${hid}`, cpuVal !== null ? `${cpuVal}%` : 'N/A', `${hid}-cpu`, cpuVal);
+                const barCpu = document.getElementById(`bar-cpu-${hid}`);
+                if (barCpu && cpuVal !== null) {
+                    barCpu.style.width = Math.min(100, cpuVal) + '%';
+                    barCpu.style.background = cpuVal >= 90 ? 'var(--status-err)' : (cpuVal >= 75 ? 'var(--status-warn)' : 'var(--accent-cyan)');
+                }
+
+                // Update CPU Lifeline ECG Monitor
+                updateHostECG(hid, cpuVal, state, m.cpu_usage_pct);
+
+                // Update Memory
+                const memVal = m.memory_usage_pct ? m.memory_usage_pct.value : null;
+                updateMetricText(`val-mem-${hid}`, memVal !== null ? `${memVal}%` : 'N/A', `${hid}-mem`, memVal);
+                const barMem = document.getElementById(`bar-mem-${hid}`);
+                if (barMem && memVal !== null) {
+                    barMem.style.width = Math.min(100, memVal) + '%';
+                    barMem.style.background = memVal >= 90 ? 'var(--status-err)' : (memVal >= 75 ? 'var(--status-warn)' : 'var(--accent-cyan)');
+                }
+
+                // Update Latency
+                const latVal = m.latency_ms ? m.latency_ms.value : null;
+                updateMetricText(`val-lat-${hid}`, latVal !== null ? `${latVal}ms` : 'N/A', `${hid}-lat`, latVal);
+
+                // Update Loss
+                const lossVal = m.packet_loss_pct ? m.packet_loss_pct.value : null;
+                updateMetricText(`val-loss-${hid}`, lossVal !== null ? `${lossVal}%` : '0%', `${hid}-loss`, lossVal);
+
+                // Update Bandwidth
+                const bwVal = m.bandwidth_mbps ? m.bandwidth_mbps.value : null;
+                updateMetricText(`val-bw-${hid}`, bwVal !== null ? `${bwVal}M` : 'N/A', `${hid}-bw`, bwVal);
+
+                // Update Service Status
+                const svcEl = document.getElementById(`val-svc-${hid}`);
+                if (svcEl) {
+                    if (m.service_status) {
+                        svcEl.innerHTML = m.service_status.value === 1 ? '<span style="color: var(--text-primary); font-weight: 600;">UP</span>' : '<span style="color: var(--status-err); font-weight: 600;">DOWN</span>';
+                    } else {
+                        svcEl.innerText = 'N/A';
+                    }
+                }
+
+                // Update Security Drawer
+                const secDrawer = document.getElementById(`sec-drawer-${hid}`);
+                const secVal = document.getElementById(`sec-val-${hid}`);
+                if (secDrawer && secVal) {
+                    if (m.failed_logins && m.failed_logins.value > 0) {
+                        secDrawer.style.display = 'flex';
+                        secVal.innerText = `${m.failed_logins.value} attempts`;
+                    } else {
+                        secDrawer.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // =========================================================================
+        // CPU Lifeline ECG Waveform Monitor (Hospital Monitor style)
+        // =========================================================================
+        const ecgStates = {};
+
+        function updateHostECG(hid, cpuVal, overallHealth, cpuMetric) {
+            if (!ecgStates[hid]) {
+                ecgStates[hid] = {
+                    points: new Array(50).fill(0),
+                    colorRatio: 0.0,
+                    targetColorRatio: 0.0,
+                    beatQueue: [],
+                    stepCounter: 0,
+                    lastStepTime: performance.now(),
+                    lastCpu: cpuVal !== null ? cpuVal : 35.0,
+                    baselineCpu: cpuVal !== null ? cpuVal : 38.0
+                };
+            }
+            const st = ecgStates[hid];
+            if (cpuVal === null || cpuVal === undefined) return;
+
+            // Determine if host is in ANOMALY state for CPU:
+            // Check health state from metric or overall health with elevated CPU, or CPU threshold >= 75%
+            const cpuHealth = cpuMetric ? cpuMetric.health_state : 'GOOD';
+            const isAnomaly = (cpuVal >= 75.0) || (cpuHealth === 'POOR') || (overallHealth === 'POOR' && cpuVal >= 70.0);
+
+            // Update DOM text and status tag
+            const cpuTextEl = document.getElementById(`ecg-cpu-${hid}`);
+            const tagEl = document.getElementById(`ecg-tag-${hid}`);
+            if (cpuTextEl) {
+                cpuTextEl.innerText = `${Math.round(cpuVal)}%`;
+                cpuTextEl.style.color = isAnomaly ? 'var(--status-err)' : 'var(--text-primary)';
+            }
+            if (tagEl) {
+                tagEl.innerText = isAnomaly ? 'ANOMALY' : 'NORMAL';
+                tagEl.className = isAnomaly ? 'ecg-status-tag tag-anomaly' : 'ecg-status-tag tag-normal';
+            }
+
+            st.targetColorRatio = isAnomaly ? 1.0 : 0.0;
+            st.lastCpu = cpuVal;
+
+            // Queue a new cardiac beat derived from real CPU data
+            // Each beat's spike height comes from how far CPU is from normal level
+            let spike = 0.2;
+            if (isAnomaly || cpuVal >= 75.0) {
+                // Tall, sharp, dramatic spike when in anomaly state (0.82 to 0.96 of canvas height)
+                spike = 0.82 + Math.min(0.14, Math.max(0, (cpuVal - 75.0) / 25.0) * 0.14);
+                // Jagged high-stress rhythm with sharp dips and rebound
+                const anomalyBeat = [
+                    0, 0.12, 0.18, 0.06, -0.16,
+                    spike, -(spike * 0.48), spike * 0.38, -(spike * 0.22),
+                    0.18, 0.09, 0, 0, 0
+                ];
+                st.beatQueue.push(...anomalyBeat);
+            } else {
+                // Calm, small regular blip when normal (0.18 to 0.28 scaled from CPU %)
+                spike = 0.18 + Math.min(0.12, (cpuVal / 100.0) * 0.15);
+                // Gentle P-Q-R-S-T cardiac cycle
+                const normalBeat = [
+                    0, 0.04, 0.07, 0.03, -0.04,
+                    spike, -(spike * 0.28), 0.07, 0.03,
+                    0, 0, 0, 0, 0, 0
+                ];
+                st.beatQueue.push(...normalBeat);
+            }
+        }
+
+        function animateLifelines(now) {
+            Object.keys(ecgStates).forEach(hid => {
+                const st = ecgStates[hid];
+                const canvas = document.getElementById(`ecg-canvas-${hid}`);
+                if (!canvas) return;
+
+                // Step rhythm: faster pace during anomaly state
+                const stepInterval = st.targetColorRatio > 0.5 ? 38 : 52;
+                if (!st.lastStepTime || now - st.lastStepTime > stepInterval) {
+                    st.lastStepTime = now;
+                    st.stepCounter++;
+
+                    // Shift line left by 1 point (scrolling right-to-left)
+                    st.points.shift();
+
+                    let nextVal = 0;
+                    if (st.beatQueue.length > 0) {
+                        nextVal = st.beatQueue.shift();
+                    } else {
+                        // Subtle, quiet baseline respiration between beats
+                        nextVal = Math.sin(st.stepCounter * 0.12) * 0.012;
+                    }
+                    st.points.push(nextVal);
+                }
+
+                // Smooth color transition: smoothly fade to red when anomaly, back to white when normal
+                st.colorRatio += (st.targetColorRatio - st.colorRatio) * 0.06;
+
+                drawECG(canvas, st);
+            });
+
+            requestAnimationFrame(animateLifelines);
+        }
+
+        function drawECG(canvas, st) {
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            const w = canvas.width;
+            const h = canvas.height;
+            const Y0 = h / 2;
+            const N = st.points.length;
+            const dx = w / (N - 1);
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Subtle center baseline guide
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 4]);
+            ctx.beginPath();
+            ctx.moveTo(0, Y0);
+            ctx.lineTo(w, Y0);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Dynamic color interpolation: pure white -> red
+            const t = Math.max(0, Math.min(1, st.colorRatio));
+            const r = Math.round(240 + (239 - 240) * t);
+            const g = Math.round(242 + (68 - 242) * t);
+            const b = Math.round(242 + (68 - 242) * t);
+            const strokeColor = `rgb(${r}, ${g}, ${b})`;
+
+            ctx.save();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1.4 + t * 0.6;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+
+            // Soft red glow on the line only when anomalous
+            if (t > 0.02) {
+                ctx.shadowColor = `rgba(239, 68, 68, ${0.75 * t})`;
+                ctx.shadowBlur = 8 * t;
+            } else {
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+            }
+
+            // Draw continuous ECG waveform from left to right
+            ctx.beginPath();
+            for (let i = 0; i < N; i++) {
+                const x = i * dx;
+                const y = Y0 - st.points[i] * (Y0 * 0.85);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Leading beat point
+            const lastY = Y0 - st.points[N - 1] * (Y0 * 0.85);
+            ctx.fillStyle = strokeColor;
+            ctx.beginPath();
+            ctx.arc(w - 2, lastY, 1.8 + t * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Launch continuous ECG hospital monitor animation loop
+        requestAnimationFrame(animateLifelines);
+
+        function updateMetricText(elemId, formattedText, cacheKey, rawVal) {
+            const el = document.getElementById(elemId);
+            if (!el) return;
+            const prev = prevMetricValues[cacheKey];
+            if (prev !== undefined && prev !== rawVal) {
+                el.innerText = formattedText;
+                el.classList.remove('num-updated');
+                void el.offsetWidth; // Trigger reflow for restartable CSS animation
+                el.classList.add('num-updated');
+            } else if (prev === undefined) {
+                el.innerText = formattedText;
+            }
+            prevMetricValues[cacheKey] = rawVal;
+        }
+
+        function renderHistory(hist) {
+            const tbody = document.getElementById('history-tbody');
+            if (!hist || hist.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">No state transitions recorded yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = hist.slice(0, 15).map(h => {
+                const newTag = h.new_state === 'POOR' ? 'state-poor' : (h.new_state === 'FAIR' ? 'state-fair' : 'state-good');
+                return `
+                <tr>
+                    <td style="font-family: var(--font-mono); color: var(--text-primary);">
+                        <strong>${getHostDisplayName(h.source_id)}</strong>
+                        <span style="font-size: 10px; color: var(--text-dim); margin-left: 4px;">(${h.source_id})</span>
+                    </td>
+                    <td><strong style="color: var(--text-primary); font-family: var(--font-mono);">${h.metric}</strong></td>
+                    <td>
+                        <div class="flow-pill">
+                            <span style="color: var(--text-dim);">${h.old_state || 'INIT'}</span>
+                            <span style="color: var(--text-muted);">&rarr;</span>
+                            <span class="state-badge ${newTag}">${h.new_state}</span>
+                        </div>
+                    </td>
+                    <td style="color: var(--text-secondary);">${h.reason}</td>
+                    <td style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">${h.event_time_utc}</td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        fetchDashboardData();
+        setInterval(fetchDashboardData, 2000);
+
+        // Dynamic header backdrop blur when scrolling up and down
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.app-header');
+            if (header) {
+                if (window.scrollY > 15) {
+                    header.classList.add('header-scrolled');
+                } else {
+                    header.classList.remove('header-scrolled');
+                }
+            }
+        }, { passive: true });
+    </script>
+
+    <!-- Firebase App & Auth SDK (v10 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script>
+        const safeopsFirebaseConfig = {
+            apiKey: "AIzaSyAoIYY7K13uBrmKNa7fxlZMo0Fb3GkFwD4",
+            authDomain: "safeops-983b2.firebaseapp.com",
+            projectId: "safeops-983b2",
+            storageBucket: "safeops-983b2.firebasestorage.app",
+            messagingSenderId: "1042395485031",
+            appId: "1:1042395485031:web:5fc433a7a34111dc99d5c2",
+            measurementId: "G-QMB8QSPHG2"
+        };
+
+        window.currentOperatorName = sessionStorage.getItem('safeops_operator') || 'SiteReliabilityEngineer';
+
+        function initFirebaseAuth() {
+            try {
+                if (typeof firebase === 'undefined') return;
+                if (!firebase.apps || !firebase.apps.length) {
+                    firebase.initializeApp(safeopsFirebaseConfig);
+                }
+                firebase.auth().onAuthStateChanged(user => {
+                    const container = document.getElementById('auth-status-container');
+                    if (!container) return;
+                    if (user) {
+                        const displayName = user.displayName || user.email || 'Operator';
+                        window.currentOperatorName = displayName;
+                        sessionStorage.setItem('safeops_operator', displayName);
+                        const photo = user.photoURL || '';
+                        container.innerHTML = `
+                            <div style="display: inline-flex; align-items: center; gap: 7px;">
+                                ${photo ? `<img src="${photo}" style="width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--accent); object-fit: cover;" alt="" />` : ''}
+                                <span style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-light); font-weight: 600;">${displayName}</span>
+                                <button onclick="handleGoogleSignOut()" class="nav-item" style="padding: 2px 6px; font-size: 10px; color: var(--text-muted); cursor: pointer;" title="Sign out">Sign Out</button>
+                            </div>
+                        `;
+                    } else {
+                        window.currentOperatorName = sessionStorage.getItem('safeops_operator') || 'SiteReliabilityEngineer';
+                        container.innerHTML = `
+                            <button onclick="handleGoogleSignIn()" class="nav-item" style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                                <svg width="12" height="12" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16.5C3.7 20.2 7.5 23.5 12 23.5z"/></svg>
+                                <span>Sign In</span>
+                            </button>
+                        `;
+                    }
+                });
+            } catch (e) {
+                console.warn("Firebase Auth error:", e);
+            }
+        }
+
+        async function handleGoogleSignIn() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                await firebase.auth().signInWithPopup(provider);
+            } catch (err) {
+                if ((err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) && window.location.hostname === '127.0.0.1') {
+                    window.location.href = window.location.href.replace('127.0.0.1', 'localhost');
+                    return;
+                }
+                console.error("Google sign-in error:", err);
+                alert(err.message || err);
+            }
+        }
+
+        async function handleGoogleSignOut() {
+            try {
+                if (typeof firebase !== 'undefined' && firebase.auth) {
+                    await firebase.auth().signOut();
+                }
+                sessionStorage.removeItem('safeops_operator');
+                window.currentOperatorName = 'SiteReliabilityEngineer';
+                const container = document.getElementById('auth-status-container');
+                if (container) {
+                    container.innerHTML = `
+                        <button onclick="handleGoogleSignIn()" class="nav-item" style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                            <svg width="12" height="12" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16.5C3.7 20.2 7.5 23.5 12 23.5z"/></svg>
+                            <span>Sign In</span>
+                        </button>
+                    `;
+                }
+            } catch (err) {
+                console.error("Sign-out error:", err);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', initFirebaseAuth);
+    </script>
+</body>
+</html>

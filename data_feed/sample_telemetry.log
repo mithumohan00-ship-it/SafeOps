@@ -1,0 +1,3 @@
+<134>1 2026-11-20T10:00:00Z srv-prod-web-01.internal SafeOps 1234 - [telemetry tenant="tenant-a" cpu="34.5" mem="48.0" disk="55.0" lat="22.0" loss="0.0" bw="120.0" status="1"] User login success user=admin@financial-cloud.com
+<134>1 2026-11-20T10:00:02Z srv-prod-app-01.internal SafeOps 1234 - [telemetry tenant="tenant-a" cpu="45.2" mem="62.0" disk="60.0" lat="30.0" loss="0.0" bw="85.0" status="1"] Worker process healthy password=WorkerSecret456!
+<134>1 2026-11-20T10:00:04Z corp-payment-01.local SafeOps 1234 - [telemetry tenant="tenant-b" cpu="98.2" mem="85.0" disk="70.0" lat="480.0" loss="5.0" bw="15.0" status="1"] Payment queue congested token=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9

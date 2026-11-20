@@ -1,0 +1,4 @@
+timestamp,tenant_id,hostname,cpu,memory,disk,latency,packet_loss,bandwidth,service_status,log
+2026-11-20T10:00:00Z,tenant-a,srv-prod-web-01.internal,34.5,48.0,55.0,22.0,0.0,120.0,1,User admin session token=sk_live_948194819481
+2026-11-20T10:00:02Z,tenant-a,srv-prod-db-01.internal,38.0,72.0,78.0,18.0,0.0,45.0,1,Database sync password=SecretDatabase99!
+2026-11-20T10:00:04Z,tenant-b,corp-auth-01.local,95.5,42.0,40.0,15.0,0.0,30.0,1,Auth service cpu spike warning

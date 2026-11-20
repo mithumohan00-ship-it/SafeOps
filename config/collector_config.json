@@ -1,0 +1,44 @@
+{
+  "collector_version": "1.0.0-hackathon",
+  "saas_url": "https://127.0.0.1:8002",
+  "ca_bundle_path": "certs/rootCA.pem",
+  "heartbeat_interval_seconds": 10,
+  "raw_retention_minutes": 60,
+  "pseudonym_salt": "safeops_deterministic_salt_tier1_2026",
+  "collect_interval_seconds": 2.0,
+  "input_format": "simulator",
+  "feed_file_path": "data_feed/telemetry_input.data",
+  "db_path": "collector_local.db",
+  "default_region": "us-east-1",
+  "regional_endpoints": {
+    "us-east-1": "https://127.0.0.1:8002",
+    "eu-central-1": "https://127.0.0.1:8002",
+    "ap-southeast-1": "https://127.0.0.1:8002"
+  },
+  "tenants": {
+    "tenant-a": {
+      "name": "Customer A (Financial Cloud)",
+      "api_key": "sec_key_tenant_a_998811",
+      "data_residency_region": "us-east-1",
+      "jurisdiction": "US-Domestic",
+      "source_timezone": "America/New_York",
+      "hosts": [
+        "srv-prod-web-01.internal",
+        "srv-prod-app-01.internal",
+        "srv-prod-db-01.internal"
+      ]
+    },
+    "tenant-b": {
+      "name": "Customer B (Healthcare Core)",
+      "api_key": "sec_key_tenant_b_443322",
+      "data_residency_region": "eu-central-1",
+      "jurisdiction": "EU-GDPR",
+      "source_timezone": "Europe/Frankfurt",
+      "hosts": [
+        "corp-payment-01.local",
+        "corp-order-01.local",
+        "corp-auth-01.local"
+      ]
+    }
+  }
+}
