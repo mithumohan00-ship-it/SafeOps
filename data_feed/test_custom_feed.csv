@@ -1,2 +1,6 @@
-tenant_id,hostname,metric,value
-tenant-a,system-host-01,cpu_usage_pct,88.4
+timestamp_utc,tenant_id,hostname,cpu_usage_pct,memory_usage_pct,disk_usage_pct,latency_ms,packet_loss_pct,bandwidth_mbps,service_status,log
+2026-11-21T09:00:00Z,tenant-a,srv-prod-web-01.internal,32.5,45.0,52.0,24.0,0.0,120.0,1,"User login success session_id=sess_837291"
+2026-11-21T09:00:02Z,tenant-a,srv-prod-app-01.internal,94.2,88.5,61.0,42.0,0.0,85.0,1,"High compute spike detected thread_count=128"
+2026-11-21T09:00:04Z,tenant-a,srv-prod-db-01.internal,41.0,68.0,77.0,18.0,0.0,90.0,1,"Database backup complete secret_pwd=ProdDbRootPassword999!"
+2026-11-21T09:00:06Z,tenant-b,corp-payment-01.local,98.5,82.0,55.0,460.0,8.5,12.0,1,"Gateway congestion warning token=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+2026-11-21T09:00:08Z,tenant-b,corp-auth-01.local,28.0,40.0,48.0,20.0,0.0,110.0,1,"Authentication service nominal api_key=sk_live_sec_8392019482"

@@ -80,14 +80,29 @@ class TestCustomVerification(unittest.TestCase):
         self.assertEqual(data["mode"], "csv")
         self.assertIn("test_custom_feed.csv", data["message"])
 
+    def tearDown(self):
+        from tier1_collector.app import ADAPTER
+        ADAPTER.feed_file_path = "data_feed/telemetry_input.data"
+        ADAPTER.set_mode("simulator")
+
     def test_04_verify_system_feed_path(self):
         """Verifies pointing the collector directly to the custom system test file path."""
-        res = self.client.post("/api/v1/adapter/set_feed_path", json={"path": self.test_file_path})
-        self.assertEqual(res.status_code, 200)
-        data = res.json()
-        self.assertEqual(data["status"], "connected")
-        self.assertEqual(data["feed_file_path"], self.test_file_path)
-        self.assertEqual(data["mode"], "csv")
+        import tempfile
+        with tempfile.NamedTemporaryFile("w+", delete=False, suffix=".csv") as tmp:
+            tmp.write("tenant_id,hostname,metric,value\ntenant-a,srv-temp-99,cpu_usage_pct,42.0\n")
+            tmp.flush()
+            tmp_path = tmp.name
+
+        try:
+            res = self.client.post("/api/v1/adapter/set_feed_path", json={"path": tmp_path})
+            self.assertEqual(res.status_code, 200)
+            data = res.json()
+            self.assertEqual(data["status"], "connected")
+            self.assertEqual(data["feed_file_path"], tmp_path)
+            self.assertEqual(data["mode"], "csv")
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
 
 
 if __name__ == "__main__":

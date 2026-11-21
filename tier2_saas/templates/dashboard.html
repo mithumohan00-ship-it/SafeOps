@@ -469,18 +469,27 @@
 
         .topology-flow-grid {
             display: grid;
-            grid-template-columns: 1fr auto 1fr auto 1fr;
-            gap: 14px;
+            gap: 16px;
             align-items: stretch;
             margin-bottom: 28px;
         }
 
+        .topology-flow-grid.flow-3tier {
+            grid-template-columns: 1fr auto 1fr auto 1fr;
+        }
+
+        .topology-flow-grid.flow-dynamic {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+
         @media (max-width: 1180px) {
-            .topology-flow-grid {
+            .topology-flow-grid,
+            .topology-flow-grid.flow-3tier,
+            .topology-flow-grid.flow-dynamic {
                 grid-template-columns: 1fr;
                 gap: 14px;
             }
-            .flow-connector { display: none; }
+            .flow-connector { display: none !important; }
         }
 
         .flow-connector {
@@ -510,6 +519,7 @@
             justify-content: space-between;
             gap: 14px;
             position: relative;
+            min-width: 0;
             transition: border-color var(--transition-fast);
         }
 
@@ -523,6 +533,7 @@
             align-items: flex-start;
             border-bottom: 1px solid var(--border);
             padding-bottom: 10px;
+            gap: 8px;
         }
 
         .tier-spec-title {
@@ -540,6 +551,10 @@
             font-weight: 700;
             color: var(--text-primary);
             letter-spacing: -0.01em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 220px;
         }
 
         .tier-sub-meta {
@@ -547,6 +562,10 @@
             font-family: var(--font-mono);
             color: var(--text-muted);
             margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 220px;
         }
 
         /* 4 Distinct Health State Badges */
@@ -684,13 +703,16 @@
             justify-content: space-between;
             align-items: center;
             font-size: 12px;
-            padding: 2px 0;
+            padding: 3px 0;
+            gap: 12px;
         }
 
         .tel-name {
             color: var(--text-muted);
             font-size: 12px;
             font-weight: 500;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .tel-val-cluster {
@@ -965,9 +987,12 @@
         </div>
 
         <!-- 5. Main Infrastructure Topology View (Web -> App -> DB) -->
-        <div class="topology-section-header">
-            <span class="topology-heading">Tiered Infrastructure Topology</span>
-            <span class="topology-caption">Deterministic Pseudonyms &bull; Local Time Normalized</span>
+        <div class="topology-section-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <span class="topology-heading">Tiered Infrastructure Topology</span>
+                <span class="topology-caption" style="margin-left: 8px;">Deterministic Pseudonyms &bull; Local Time Normalized</span>
+            </div>
+            <button onclick="pruneInactiveNodes()" class="nav-item" style="font-size: 10px; padding: 3px 8px; color: var(--text-muted);" title="Reset topology view to canonical tiers">Reset Topology</button>
         </div>
 
         <!-- Target Topology Container (Preserving id="hosts-container") -->
@@ -1023,8 +1048,21 @@
             "Auth Directory (DB Layer)": "DATA TIER 03"
         };
 
+        const TIER_ORDER = {
+            "host-5a29f93e": 1, // Web Layer
+            "host-9266dbda": 2, // Application Layer
+            "host-e5ef01de": 3, // Database Layer
+            "host-7a546756": 1, // Payment Gateway (Web Tier)
+            "host-fcc45d28": 2, // Order Processing (App Tier)
+            "host-a54f117b": 3  // Auth Directory (DB Tier)
+        };
+
         function getHostDisplayName(sourceId) {
-            return HOST_LAYER_NAMES[sourceId] || sourceId;
+            if (HOST_LAYER_NAMES[sourceId]) {
+                return HOST_LAYER_NAMES[sourceId];
+            }
+            const clean = sourceId.replace(/^host-/, '').substring(0, 8);
+            return `Custom Node (${clean})`;
         }
 
         function switchTenant() {
@@ -1032,6 +1070,16 @@
             document.getElementById('active-tenant-badge').innerText = currentTenant === 'tenant-a' ? 'Tenant A' : 'Tenant B';
             renderedHostTopologyKey = '';
             fetchDashboardData();
+        }
+
+        async function pruneInactiveNodes() {
+            try {
+                await fetch('/api/v1/control/reset', { method: 'POST' });
+                renderedHostTopologyKey = '';
+                await fetchDashboardData();
+            } catch (e) {
+                console.error('Reset topology error:', e);
+            }
         }
 
         async function fetchDashboardData() {
@@ -1130,24 +1178,34 @@
                 return;
             }
 
-            const currentKey = currentTenant + ':' + hostKeys.sort().join(',');
+            // Sort by canonical tier sequence: Web -> App -> Database -> Other nodes
+            hostKeys.sort((a, b) => {
+                const orderA = TIER_ORDER[a] || 99;
+                const orderB = TIER_ORDER[b] || 99;
+                if (orderA !== orderB) return orderA - orderB;
+                return a.localeCompare(b);
+            });
+
+            const currentKey = currentTenant + ':' + hostKeys.join(',');
+            const isThreeTier = (hostKeys.length === 3);
 
             // 1. Build topology skeleton once if key changed
             if (renderedHostTopologyKey !== currentKey) {
                 renderedHostTopologyKey = currentKey;
+                container.className = isThreeTier ? "topology-flow-grid flow-3tier" : "topology-flow-grid flow-dynamic";
                 let html = '';
 
                 hostKeys.forEach((hid, idx) => {
                     const h = hosts[hid];
                     const layerName = getHostDisplayName(h.source_id);
-                    const tierSpec = LAYER_SPECS[layerName] || `TIER 0${idx+1}`;
+                    const tierSpec = LAYER_SPECS[layerName] || `NODE 0${idx+1}`;
 
                     html += `
                     <div class="tier-node-card" id="node-${hid}">
                         <div class="tier-topbar">
                             <div>
                                 <div class="tier-spec-title">${tierSpec}</div>
-                                <div class="tier-layer-name">${layerName}</div>
+                                <div class="tier-layer-name" title="${layerName}">${layerName}</div>
                                 <div class="tier-sub-meta">
                                     <span>${h.source_id}</span> &bull; <span id="tz-${hid}">${h.source_timezone || 'UTC'}</span>
                                 </div>
@@ -1221,8 +1279,8 @@
                     </div>
                     `;
 
-                    // Add animated connector between nodes (except last)
-                    if (idx < hostKeys.length - 1) {
+                    // Only add horizontal flow connectors when in 3-tier linear flow
+                    if (isThreeTier && idx < hostKeys.length - 1) {
                         html += `
                         <div class="flow-connector">
                             <svg viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
