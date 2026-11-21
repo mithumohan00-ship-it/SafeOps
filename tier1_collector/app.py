@@ -11,8 +11,10 @@ Provides:
 """
 
 import asyncio
+import datetime
 import json
 import os
+import re
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 
@@ -219,7 +221,12 @@ async def switch_adapter_mode(payload: Dict[str, Any] = Body(...)):
     if not mode:
         raise HTTPException(status_code=400, detail="Missing 'mode' in payload")
     ADAPTER.set_mode(mode)
-    return JSONResponse(content={"status": "updated", "current_format": ADAPTER.get_mode()})
+    current_mode = ADAPTER.get_mode()
+    return JSONResponse(content={
+        "status": "updated",
+        "current_format": current_mode,
+        "mode": current_mode
+    })
 
 
 @app.post("/api/v1/adapter/push")
@@ -249,13 +256,15 @@ async def push_external_telemetry(request: Request):
 
 @app.post("/api/v1/adapter/load_sample")
 async def load_sample_feed(payload: Dict[str, Any] = Body(...)):
-    """Copies sample CSV, Syslog, or JSONL into feed_file_path for quick testing, or resets to simulator."""
+    """Copies sample CSV, Syslog, or JSONL into feed_file_path with live timestamps for immediate streaming, or resets to simulator."""
+    import re
     format_type = payload.get("format", "csv").lower()
     if format_type in ("simulator", "reset_simulator", "reset"):
         ADAPTER.set_mode("simulator")
         return JSONResponse(content={
             "status": "loaded",
             "format": "simulator",
+            "mode": "simulator",
             "message": "Switched adapter back to default simulator."
         })
 
@@ -270,16 +279,25 @@ async def load_sample_feed(payload: Dict[str, Any] = Body(...)):
 
     target_file = ADAPTER.feed_file_path
     os.makedirs(os.path.dirname(target_file) if os.path.dirname(target_file) else ".", exist_ok=True)
-    with open(src_file, "r") as sf, open(target_file, "w") as tf:
-        tf.write(sf.read())
+    with open(src_file, "r") as sf:
+        raw_content = sf.read()
 
-    # Switch adapter mode to match
+    # Rewrite static timestamps with fresh UTC timestamps so SaaS never flags sample records as stale
+    now_utc_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    live_content = re.sub(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z?", now_utc_str, raw_content)
+
+    with open(target_file, "w") as tf:
+        tf.write(live_content)
+
+    # Switch adapter mode to match and reset file offset
     ADAPTER.set_mode(format_type)
+    ADAPTER.file_last_position = 0
     return JSONResponse(content={
         "status": "loaded",
         "format": format_type,
+        "mode": format_type,
         "target_file": target_file,
-        "message": f"Loaded {format_type.upper()} feed into {target_file}. Adapter switched to '{format_type}' mode."
+        "message": f"Loaded {format_type.upper()} feed into {target_file}. Streaming live with fresh timestamps."
     })
 
 

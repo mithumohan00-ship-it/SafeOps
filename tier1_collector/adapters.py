@@ -678,6 +678,8 @@ class UniversalFeedAdapter(BaseTelemetryAdapter):
             return
 
         if isinstance(raw_input, dict):
+            if "raw_line" in raw_input and isinstance(raw_input["raw_line"], str):
+                return self.push_external_payload(raw_input["raw_line"], forced_format=forced_format)
             rec = self.parser.parse_jsonl_line(json.dumps(raw_input))
             if rec:
                 self.http_buffer.append(rec)
@@ -737,7 +739,8 @@ class UniversalFeedAdapter(BaseTelemetryAdapter):
                 with open(self.feed_file_path, "r", encoding="utf-8") as f:
                     f.seek(0, os.SEEK_END)
                     size = f.tell()
-                    if size < self.file_last_position:
+                    # Loop back to beginning when EOF is reached so continuous sample telemetry keeps streaming
+                    if size > 0 and self.file_last_position >= size:
                         self.file_last_position = 0
 
                     f.seek(self.file_last_position)
@@ -751,26 +754,35 @@ class UniversalFeedAdapter(BaseTelemetryAdapter):
 
                 if buffer_lines:
                     chunk = "".join(buffer_lines)
+                    now_utc = datetime.datetime.now(datetime.timezone.utc).isoformat()
+                    now_local = datetime.datetime.now().isoformat()
+                    parsed: List[Dict[str, Any]] = []
+
                     if self.format_mode == "csv":
-                        recs = self.parser.parse_csv_stream(chunk)
-                        self.records_by_format["csv"] += len(recs)
-                        records.extend(recs)
+                        parsed = self.parser.parse_csv_stream(chunk)
+                        self.records_by_format["csv"] += len(parsed)
                     elif self.format_mode == "syslog":
                         for l in buffer_lines:
                             r = self.parser.parse_syslog_line(l)
                             if r:
-                                records.append(r)
+                                parsed.append(r)
                                 self.records_by_format["syslog"] += 1
                     elif self.format_mode == "jsonl":
                         for l in buffer_lines:
                             r = self.parser.parse_jsonl_line(l)
                             if r:
-                                records.append(r)
+                                parsed.append(r)
                                 self.records_by_format["jsonl"] += 1
                     else:  # auto
-                        recs = self.parser.auto_detect_and_parse(chunk)
-                        self.records_by_format["auto"] += len(recs)
-                        records.extend(recs)
+                        parsed = self.parser.auto_detect_and_parse(chunk)
+                        self.records_by_format["auto"] += len(parsed)
+
+                    # Ensure live UTC timestamp and unique raw_id for each emitted packet so SaaS treats it as fresh
+                    for r in parsed:
+                        r["timestamp_utc"] = now_utc
+                        r["timestamp_local"] = now_local
+                        r["raw_id"] = str(uuid.uuid4())
+                        records.append(r)
             except Exception:
                 pass
 
