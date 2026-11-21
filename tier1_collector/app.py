@@ -44,7 +44,8 @@ if not saas_url.startswith(("http://", "https://")):
 COLLECTOR_CONFIG["saas_url"] = saas_url.rstrip("/")
 
 # Initialize Dedicated Collector Storage (separate database)
-COLLECTOR_DB_PATH = os.environ.get("COLLECTOR_DB_PATH") or COLLECTOR_CONFIG.get("db_path", "collector_local.db")
+default_col_db = "/tmp/collector_local.db" if os.environ.get("VERCEL") else "collector_local.db"
+COLLECTOR_DB_PATH = "/tmp/collector_local.db" if os.environ.get("VERCEL") else (os.environ.get("COLLECTOR_DB_PATH") or COLLECTOR_CONFIG.get("db_path", "collector_local.db"))
 STORAGE = CollectorStorage(COLLECTOR_DB_PATH)
 ADAPTER = UniversalFeedAdapter(COLLECTOR_CONFIG)
 PIPELINE = CollectorPipeline(salt=COLLECTOR_CONFIG.get("pseudonym_salt", "safeops_salt"))

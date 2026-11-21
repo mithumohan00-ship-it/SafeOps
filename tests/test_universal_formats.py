@@ -22,7 +22,7 @@ from tier1_collector.format_parser import UniversalFormatParser
 from tier1_collector.adapters import UniversalFeedAdapter
 from tier1_collector.pipeline import CollectorPipeline
 from starlette.testclient import TestClient
-from tier1_collector.app import app
+from tier1_collector.app import app as collector_app
 
 
 class TestUniversalFormatParser(unittest.TestCase):
@@ -144,7 +144,7 @@ class TestUniversalFeedAdapter(unittest.TestCase):
 class TestCollectorUniversalEndpoints(unittest.TestCase):
 
     def setUp(self):
-        self.client = TestClient(app)
+        self.client = TestClient(collector_app)
 
     def test_01_status_contains_input_format(self):
         """Verify GET /api/v1/status reports active input format."""

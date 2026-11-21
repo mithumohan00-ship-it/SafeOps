@@ -25,7 +25,8 @@ from tier2_saas.health_engine import HealthEngine
 from tier2_saas.storage import SaaSStorage
 
 # Initialize SaaS services with dedicated database
-SAAS_DB_PATH = os.environ.get("SAAS_DB_PATH", "saas_cloud.db")
+default_saas_db = "/tmp/saas_cloud.db" if os.environ.get("VERCEL") else "saas_cloud.db"
+SAAS_DB_PATH = os.environ.get("SAAS_DB_PATH", default_saas_db)
 SAAS_REGION = os.environ.get("SAAS_REGION", "us-east-1")
 STORAGE = SaaSStorage(SAAS_DB_PATH)
 HEALTH_ENGINE = HealthEngine(STORAGE)
