@@ -726,7 +726,7 @@ class UniversalFeedAdapter(BaseTelemetryAdapter):
             self.http_buffer.clear()
 
         # 2. Simulator mode (Default procedural JSON lines generator)
-        if self.format_mode == "simulator":
+        if self.format_mode == "simulator" and self.config.get("simulator_enabled", True):
             sim_recs = self.sim_adapter.fetch_records()
             self.records_by_format["simulator"] += len(sim_recs)
             records.extend(sim_recs)

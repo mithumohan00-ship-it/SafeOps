@@ -24,6 +24,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from tier1_collector.adapters import UniversalFeedAdapter
 from tier1_collector.buffer_sender import BufferSender
 from tier1_collector.pipeline import CollectorPipeline
+from tier1_collector.probes import ProbeManager
 from tier1_collector.storage import CollectorStorage
 
 # Load configuration
@@ -50,6 +51,7 @@ default_col_db = "/tmp/collector_local.db" if os.environ.get("VERCEL") else "col
 COLLECTOR_DB_PATH = "/tmp/collector_local.db" if os.environ.get("VERCEL") else (os.environ.get("COLLECTOR_DB_PATH") or COLLECTOR_CONFIG.get("db_path", "collector_local.db"))
 STORAGE = CollectorStorage(COLLECTOR_DB_PATH)
 ADAPTER = UniversalFeedAdapter(COLLECTOR_CONFIG)
+PROBE_MANAGER = ProbeManager(COLLECTOR_CONFIG, ADAPTER.parser)
 PIPELINE = CollectorPipeline(salt=COLLECTOR_CONFIG.get("pseudonym_salt", "safeops_salt"))
 BUFFER_SENDER = BufferSender(COLLECTOR_CONFIG, STORAGE, ADAPTER)
 
@@ -62,8 +64,13 @@ async def background_collector_loop():
     interval = COLLECTOR_CONFIG.get("collect_interval_seconds", 2.0)
     while IS_COLLECTOR_RUNNING:
         try:
-            # Fetch from active input adapter (Simulator, JSON Lines, CSV, Syslog, or HTTP)
+            # 1. Fetch from active input adapter (Simulator, JSON Lines, CSV, Syslog, or HTTP)
             records = ADAPTER.fetch_records()
+
+            # 2. Fetch from active Real Telemetry Probes (Network, WebApp, Database, Syslog UDP)
+            probe_records = PROBE_MANAGER.collect_records()
+            if probe_records:
+                records.extend(probe_records)
 
             for raw_record in records:
                 # Local isolation: Store raw event with full logs & ambient secrets
@@ -96,6 +103,9 @@ async def lifespan(app: FastAPI):
     # Start sender worker (heartbeat & HTTP delivery)
     await BUFFER_SENDER.start()
 
+    # Start real telemetry probes (Network, WebApp, Database, Syslog UDP)
+    PROBE_MANAGER.start()
+
     # Start telemetry collection loop
     collector_task = asyncio.create_task(background_collector_loop())
 
@@ -105,6 +115,7 @@ async def lifespan(app: FastAPI):
     global IS_COLLECTOR_RUNNING
     IS_COLLECTOR_RUNNING = False
     collector_task.cancel()
+    PROBE_MANAGER.stop()
     await BUFFER_SENDER.stop()
     print("SafeOps Tier 1 Customer Collector stopped.")
 
@@ -399,7 +410,13 @@ async def get_collector_status():
         "input_format": ADAPTER.get_mode(),
         "saas_outage_simulated": adapter_status.get("saas_outage_simulated", False),
         "adapter": adapter_status,
-        "buffer": buffer_stats
+        "buffer": buffer_stats,
+        "probes": {
+            "network": PROBE_MANAGER.network_probe.enabled,
+            "webapp": PROBE_MANAGER.webapp_probe.enabled,
+            "database": PROBE_MANAGER.database_probe.enabled,
+            "syslog_udp": PROBE_MANAGER.syslog_listener.enabled
+        }
     })
 
 

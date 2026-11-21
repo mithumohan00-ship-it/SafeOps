@@ -6,9 +6,45 @@
   "raw_retention_minutes": 60,
   "pseudonym_salt": "safeops_deterministic_salt_tier1_2026",
   "collect_interval_seconds": 2.0,
+  "simulator_enabled": true,
   "input_format": "simulator",
   "feed_file_path": "data_feed/telemetry_input.data",
   "db_path": "collector_local.db",
+  "network_probe": {
+    "enabled": true,
+    "interval_seconds": 5.0,
+    "tenant_id": "tenant-a",
+    "targets": [
+      {"target": "8.8.8.8", "hostname": "srv-prod-web-01.internal", "tenant_id": "tenant-a"},
+      {"target": "1.1.1.1", "hostname": "srv-prod-app-01.internal", "tenant_id": "tenant-a"}
+    ]
+  },
+  "webapp_probe": {
+    "enabled": true,
+    "interval_seconds": 5.0,
+    "tenant_id": "tenant-a",
+    "targets": [
+      {
+        "name": "srv-prod-web-01.internal",
+        "url": "https://127.0.0.1:8002/api/v1/residency/status",
+        "tenant_id": "tenant-a"
+      }
+    ]
+  },
+  "database_probe": {
+    "enabled": true,
+    "interval_seconds": 5.0,
+    "db_type": "sqlite",
+    "db_path": "collector_local.db",
+    "tenant_id": "tenant-a",
+    "hostname": "srv-prod-db-01.internal"
+  },
+  "syslog_udp": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 5514,
+    "default_tenant_id": "tenant-a"
+  },
   "default_region": "us-east-1",
   "regional_endpoints": {
     "us-east-1": "https://127.0.0.1:8002",
