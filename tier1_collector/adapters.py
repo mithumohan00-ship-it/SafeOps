@@ -742,9 +742,12 @@ class UniversalFeedAdapter(BaseTelemetryAdapter):
                 with open(self.feed_file_path, "r", encoding="utf-8") as f:
                     f.seek(0, os.SEEK_END)
                     size = f.tell()
-                    # Loop back to beginning when EOF is reached so continuous sample telemetry keeps streaming
-                    if size > 0 and self.file_last_position >= size:
+                    if size < self.file_last_position:
+                        # File was truncated or overwritten
                         self.file_last_position = 0
+                    elif size > 0 and self.file_last_position >= size:
+                        # At EOF, wait for new data to be appended
+                        return records
 
                     f.seek(self.file_last_position)
                     buffer_lines = []
