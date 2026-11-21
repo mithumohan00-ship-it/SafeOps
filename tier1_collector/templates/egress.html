@@ -1117,6 +1117,14 @@
         fetchData();
         setInterval(fetchData, 1000);
 
+        if (window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
+            document.querySelectorAll('a[href*=":8002"]').forEach(a => {
+                if (a.href.includes('/dashboard')) a.href = '/dashboard';
+                else if (a.href.includes('/incidents')) a.href = '/incidents';
+                else if (a.href.includes('/reliability')) a.href = '/reliability';
+            });
+        }
+
         // Dynamic header backdrop blur when scrolling up and down
         window.addEventListener('scroll', () => {
             const header = document.querySelector('.app-header');

@@ -911,6 +911,21 @@
             }
         }
 
+        function updateCloudNavLinks() {
+            if (window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
+                document.querySelectorAll('a[href*=":8001"]').forEach(a => {
+                    if (a.href.includes('/egress')) {
+                        a.href = '/egress';
+                        a.innerHTML = 'Egress Proof &rarr;';
+                    } else if (a.href.includes('/control')) {
+                        a.href = '/control';
+                        a.innerHTML = 'Demo Control &rarr;';
+                    }
+                });
+            }
+        }
+        updateCloudNavLinks();
+
         window.addEventListener('DOMContentLoaded', initFirebaseAuth);
     </script>
 </body>
