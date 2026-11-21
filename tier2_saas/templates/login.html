@@ -749,9 +749,15 @@
                 console.warn('Google sign-in:', err);
                 const banner = document.getElementById('toast-banner');
                 if (banner) {
-                    banner.innerText = (err.code === 'auth/unauthorized-domain') 
-                        ? 'Notice: Domain not authorized in Firebase Console yet. You can sign in below using Operator SSO or Instant Demo Access.'
-                        : `Sign in error: ${err.message}`;
+                    if (err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) {
+                        banner.innerHTML = `
+                            <strong>Domain Not Authorized in Firebase (${window.location.hostname})</strong><br>
+                            To authorize: in Firebase Console &rarr; Authentication &rarr; Settings &rarr; Authorized Domains &rarr; add <code>${window.location.hostname}</code>.<br><br>
+                            <button onclick="instantDemoAccess()" style="background: var(--accent); color: #000; border: none; padding: 6px 14px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; border-radius: 3px; cursor: pointer;">Enter Console via Operator Access &rarr;</button>
+                        `;
+                    } else {
+                        banner.innerText = `Sign in error: ${err.message}`;
+                    }
                     banner.style.display = 'block';
                 }
             }

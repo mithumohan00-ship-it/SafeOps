@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Unbounded:wght@600;700;800&display=swap"
+        rel="stylesheet">
     <title>SafeOps | Cloud Infrastructure Intelligence</title>
     <style>
         :root {
@@ -20,7 +23,7 @@
             --text-secondary: #c0c4c4;
             --text-muted: #7c7f80;
             --text-dim: #4d5052;
-            
+
             --accent: #ba7924;
             --accent-light: #e9c28f;
             --accent-muted: rgba(186, 121, 36, 0.12);
@@ -50,8 +53,12 @@
             --transition-smooth: 0.2s ease-out;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             background-color: var(--bg-base);
             color: var(--text-primary);
@@ -240,8 +247,13 @@
             transition: border-color var(--transition-fast);
         }
 
-        .tenant-dropdown:hover { border-color: var(--border-hover); }
-        .tenant-dropdown:focus { border-color: var(--border-focus); }
+        .tenant-dropdown:hover {
+            border-color: var(--border-hover);
+        }
+
+        .tenant-dropdown:focus {
+            border-color: var(--border-focus);
+        }
 
         .tenant-chip {
             font-family: var(--font-mono);
@@ -265,8 +277,13 @@
             padding: 0;
         }
 
-        .residency-pills strong { color: var(--text-secondary); }
-        .residency-sep { color: var(--border); }
+        .residency-pills strong {
+            color: var(--text-secondary);
+        }
+
+        .residency-sep {
+            color: var(--border);
+        }
 
         /* Collector Status Beacon */
         .collector-beacon {
@@ -335,11 +352,15 @@
         }
 
         @media (max-width: 1024px) {
-            .live-sla-panel { grid-template-columns: repeat(3, 1fr); }
+            .live-sla-panel {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
 
         @media (max-width: 640px) {
-            .live-sla-panel { grid-template-columns: 1fr; }
+            .live-sla-panel {
+                grid-template-columns: 1fr;
+            }
         }
 
         .sla-cell {
@@ -411,11 +432,32 @@
             font-size: 12px;
         }
 
-        .h-tag { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
-        .h-val { font-size: 18px; font-weight: 700; font-family: var(--font-heading); color: var(--text-primary); font-variant-numeric: tabular-nums; }
-        .h-val.val-ok { color: var(--status-ok); }
-        .h-val.val-fair { color: var(--status-warn); }
-        .h-val.val-poor { color: var(--status-err); }
+        .h-tag {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .h-val {
+            font-size: 18px;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            color: var(--text-primary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .h-val.val-ok {
+            color: var(--status-ok);
+        }
+
+        .h-val.val-fair {
+            color: var(--status-warn);
+        }
+
+        .h-val.val-poor {
+            color: var(--status-err);
+        }
 
         .health-progress-wrap {
             display: flex;
@@ -434,9 +476,17 @@
             flex: 1;
         }
 
-        .hp-fill-ok { background: var(--status-ok); }
-        .hp-fill-fair { background: var(--status-warn); }
-        .hp-fill-poor { background: var(--status-err); }
+        .hp-fill-ok {
+            background: var(--status-ok);
+        }
+
+        .hp-fill-fair {
+            background: var(--status-warn);
+        }
+
+        .hp-fill-poor {
+            background: var(--status-err);
+        }
 
         .eval-stamp {
             font-size: 11px;
@@ -483,13 +533,17 @@
         }
 
         @media (max-width: 1180px) {
+
             .topology-flow-grid,
             .topology-flow-grid.flow-3tier,
             .topology-flow-grid.flow-dynamic {
                 grid-template-columns: 1fr;
                 gap: 14px;
             }
-            .flow-connector { display: none !important; }
+
+            .flow-connector {
+                display: none !important;
+            }
         }
 
         .flow-connector {
@@ -755,8 +809,15 @@
             font-size: 11px;
         }
 
-        .sub-name { color: var(--text-dim); }
-        .sub-val { font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary); }
+        .sub-name {
+            color: var(--text-dim);
+        }
+
+        .sub-val {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
 
         /* Security Alert Drawer */
         .sec-alert-drawer {
@@ -842,6 +903,7 @@
                 align-items: flex-start;
                 gap: 12px;
             }
+
             .nav-cluster {
                 width: 100%;
                 overflow-x: auto;
@@ -856,9 +918,9 @@
                 transition: none !important;
             }
         }
-
     </style>
 </head>
+
 <body>
 
     <div class="layout-container">
@@ -866,7 +928,9 @@
         <header class="app-header">
             <div class="brand-cluster">
                 <div class="brand-mark">
-                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
                 </div>
                 <div class="brand-name">
                     SafeOps Cloud
@@ -879,7 +943,8 @@
                 <a href="/incidents" class="nav-item">AIOps Incidents</a>
                 <a href="/reliability" class="nav-item">Reliability SLA</a>
                 <span class="nav-divider"></span>
-                <a href="http://127.0.0.1:8001/egress" target="_blank" class="nav-item nav-ext">Egress Proof (Port 8001) &rarr;</a>
+                <a href="http://127.0.0.1:8001/egress" target="_blank" class="nav-item nav-ext">Egress Proof (Port 8001)
+                    &rarr;</a>
                 <a href="http://127.0.0.1:8001/control" target="_blank" class="nav-item nav-ext">Demo Control &rarr;</a>
                 <span class="nav-divider"></span>
                 <div id="auth-status-container" style="display: inline-flex; align-items: center;"></div>
@@ -900,7 +965,8 @@
                 <div class="residency-pills">
                     <span>Region: <strong id="res-home">us-east-1</strong></span>
                     <span class="residency-sep">&bull;</span>
-                    <span>Residency Rule: <strong id="res-jurisdiction">Strict Domestic Only (Zero Cross-Border Export)</strong></span>
+                    <span>Residency Rule: <strong id="res-jurisdiction">Strict Domestic Only (Zero Cross-Border
+                            Export)</strong></span>
                     <span class="residency-sep">&bull;</span>
                     <span>Node: <strong id="res-node">us-east-1</strong></span>
                 </div>
@@ -914,7 +980,11 @@
 
         <!-- 3. Stale Data Notice -->
         <div id="stale-banner" class="alert-stale">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
             <div>
                 <strong>Stale Data Alert:</strong> Telemetry updates paused >30s. Host health downgraded per SLA policy.
             </div>
@@ -958,7 +1028,8 @@
         <div class="health-summary-strip">
             <div class="summary-label-group">
                 <span class="summary-title">Infrastructure Health</span>
-                <span style="font-size: 11px; color: var(--text-dim);">[<span id="ov-hosts">3</span> Hosts Active]</span>
+                <span style="font-size: 11px; color: var(--text-dim);">[<span id="ov-hosts">3</span> Hosts
+                    Active]</span>
             </div>
 
             <div class="summary-counts">
@@ -987,17 +1058,22 @@
         </div>
 
         <!-- 5. Main Infrastructure Topology View (Web -> App -> DB) -->
-        <div class="topology-section-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="topology-section-header"
+            style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <span class="topology-heading">Tiered Infrastructure Topology</span>
-                <span class="topology-caption" style="margin-left: 8px;">Deterministic Pseudonyms &bull; Local Time Normalized</span>
+                <span class="topology-caption" style="margin-left: 8px;">Deterministic Pseudonyms &bull; Local Time
+                    Normalized</span>
             </div>
-            <button onclick="pruneInactiveNodes()" class="nav-item" style="font-size: 10px; padding: 3px 8px; color: var(--text-muted);" title="Reset topology view to canonical tiers">Reset Topology</button>
+            <button onclick="pruneInactiveNodes()" class="nav-item"
+                style="font-size: 10px; padding: 3px 8px; color: var(--text-muted);"
+                title="Reset topology view to canonical tiers">Reset Topology</button>
         </div>
 
         <!-- Target Topology Container (Preserving id="hosts-container") -->
         <div id="hosts-container" class="topology-flow-grid">
-            <div style="grid-column: 1 / -1; text-align: center; padding: 32px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-muted);">
+            <div
+                style="grid-column: 1 / -1; text-align: center; padding: 32px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-muted);">
                 Initializing topology map...
             </div>
         </div>
@@ -1006,7 +1082,8 @@
         <div class="history-panel">
             <div class="history-topbar">
                 <span class="history-title">State Change Audit Stream</span>
-                <button onclick="fetchDashboardData()" class="nav-item" style="font-size: 11px; padding: 3px 9px;">Refresh</button>
+                <button onclick="fetchDashboardData()" class="nav-item"
+                    style="font-size: 11px; padding: 3px 9px;">Refresh</button>
             </div>
             <table class="history-table">
                 <thead>
@@ -1019,7 +1096,10 @@
                     </tr>
                 </thead>
                 <tbody id="history-tbody">
-                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">No state changes recorded yet.</td></tr>
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">No state
+                            changes recorded yet.</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -1089,8 +1169,8 @@
 
                 if (data.residency) {
                     document.getElementById('res-home').innerText = data.residency.home_region || 'us-east-1';
-                    const jurPlain = (data.residency && data.residency.jurisdiction) ? 
-                        (data.residency.jurisdiction === 'US-Domestic' || data.residency.jurisdiction.includes('US') ? 'Strict US Domestic Lock (No Foreign Export)' : data.residency.jurisdiction) : 
+                    const jurPlain = (data.residency && data.residency.jurisdiction) ?
+                        (data.residency.jurisdiction === 'US-Domestic' || data.residency.jurisdiction.includes('US') ? 'Strict US Domestic Lock (No Foreign Export)' : data.residency.jurisdiction) :
                         'Strict Regional Isolation';
                     document.getElementById('res-jurisdiction').innerText = jurPlain;
                 }
@@ -1198,7 +1278,7 @@
                 hostKeys.forEach((hid, idx) => {
                     const h = hosts[hid];
                     const layerName = getHostDisplayName(h.source_id);
-                    const tierSpec = LAYER_SPECS[layerName] || `NODE 0${idx+1}`;
+                    const tierSpec = LAYER_SPECS[layerName] || `NODE 0${idx + 1}`;
 
                     html += `
                     <div class="tier-node-card" id="node-${hid}">
@@ -1643,17 +1723,68 @@
             }
         }
 
+        function showDomainAuthModal(host) {
+            const existing = document.getElementById('domain-auth-modal');
+            if (existing) existing.remove();
+            const modal = document.createElement('div');
+            modal.id = 'domain-auth-modal';
+            modal.style.cssText = 'position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 20px;';
+            modal.innerHTML = `
+                <div style="background: #111213; border: 1px solid #ba7924; border-radius: 4px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 16px 40px rgba(0,0,0,0.6);">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <span style="color: #ba7924; font-size: 16px;">&#9888;</span>
+                        <span style="font-family: var(--font-heading); font-size: 13px; font-weight: 700; text-transform: uppercase; color: #f0f2f2;">Firebase OAuth Domain Notice</span>
+                    </div>
+                    <div style="font-size: 12px; color: #c0c4c4; line-height: 1.6; margin-bottom: 16px;">
+                        The domain <code style="color: #ba7924; background: #1a1b1c; padding: 2px 6px; border-radius: 2px;">${host}</code> has not been whitelisted in Firebase Console for OAuth popups.<br><br>
+                        <strong>To whitelist:</strong> In Firebase Console &rarr; <em>Authentication &rarr; Settings &rarr; Authorized Domains</em>, add <code style="color: #ba7924;">${host}</code>.<br><br>
+                        You can sign in immediately below using Operator SSO.
+                    </div>
+                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                        <button onclick="document.getElementById('domain-auth-modal').remove()" class="nav-item" style="padding: 6px 12px; cursor: pointer;">Cancel</button>
+                        <button onclick="loginAsFallbackOperator('${host}')" class="feed-btn primary" style="padding: 6px 14px; background: #ba7924; color: #000; font-weight: 700; cursor: pointer;">Continue as Operator SSO</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function loginAsFallbackOperator(host) {
+            const modal = document.getElementById('domain-auth-modal');
+            if (modal) modal.remove();
+            const opName = 'Operator (' + host + ')';
+            sessionStorage.setItem('safeops_operator', opName);
+            window.currentOperatorName = opName;
+            const container = document.getElementById('auth-status-container');
+            if (container) {
+                container.innerHTML = `
+                    <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px;">
+                        <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--status-ok);"></span>
+                        <span style="font-family: var(--font-mono); color: var(--text-primary); font-weight: 600;">${opName}</span>
+                        <button onclick="handleGoogleSignOut()" class="nav-item" style="padding: 2px 6px; font-size: 10px; color: var(--text-muted); cursor: pointer;" title="Sign out">Sign Out</button>
+                    </div>
+                `;
+            }
+            if (typeof fetchDashboardData === 'function') fetchDashboardData();
+            if (typeof fetchIncidents === 'function') fetchIncidents();
+            if (typeof fetchReliability === 'function') fetchReliability();
+        }
+
         async function handleGoogleSignIn() {
             try {
+                if (typeof firebase === 'undefined' || !firebase.auth) {
+                    window.location.href = '/login';
+                    return;
+                }
                 const provider = new firebase.auth.GoogleAuthProvider();
                 await firebase.auth().signInWithPopup(provider);
             } catch (err) {
-                if ((err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) && window.location.hostname === '127.0.0.1') {
-                    window.location.href = window.location.href.replace('127.0.0.1', 'localhost');
-                    return;
+                console.warn("Google sign-in error:", err);
+                if (err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) {
+                    showDomainAuthModal(window.location.hostname);
+                } else if (err.code !== 'auth/popup-closed-by-user') {
+                    showDomainAuthModal(window.location.hostname);
                 }
-                console.error("Google sign-in error:", err);
-                alert(err.message || err);
             }
         }
 
@@ -1662,20 +1793,14 @@
                 if (typeof firebase !== 'undefined' && firebase.auth) {
                     await firebase.auth().signOut();
                 }
-                sessionStorage.removeItem('safeops_operator');
-                window.currentOperatorName = 'SiteReliabilityEngineer';
-                const container = document.getElementById('auth-status-container');
-                if (container) {
-                    container.innerHTML = `
-                        <button onclick="handleGoogleSignIn()" class="nav-item" style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
-                            <svg width="12" height="12" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16.5C3.7 20.2 7.5 23.5 12 23.5z"/></svg>
-                            <span>Sign In</span>
-                        </button>
-                    `;
-                }
-            } catch (err) {
-                console.error("Sign-out error:", err);
-            }
+            } catch (e) { }
+            if (window.pollingTimer) clearInterval(window.pollingTimer);
+            sessionStorage.clear();
+            localStorage.clear();
+            window.location.replace('/login');
+        } catch (err) {
+            console.error("Sign-out error:", err);
+        }
         }
 
         function updateCloudNavLinks() {
@@ -1696,4 +1821,5 @@
         window.addEventListener('DOMContentLoaded', initFirebaseAuth);
     </script>
 </body>
+
 </html>

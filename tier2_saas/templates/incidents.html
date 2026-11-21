@@ -721,7 +721,31 @@
             fetchIncidents();
         }
 
+                function getActiveOperator() {
+            return sessionStorage.getItem('safeops_operator') || localStorage.getItem('safeops_operator');
+        }
+
+        function checkAuthGuard() {
+            const op = getActiveOperator();
+            if (!op) {
+                if (window.pollingTimer) clearInterval(window.pollingTimer);
+                document.body.innerHTML = `
+                    <div style="min-height: 100vh; background: #0a0c10; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; color: #f0f3f8; padding: 20px;">
+                        <div style="background: #12151b; border: 1px solid #222733; padding: 32px 40px; border-radius: 8px; text-align: center; max-width: 440px;">
+                            <div style="color: #ba7924; font-size: 18px; font-weight: 700; margin-bottom: 8px;">SafeOps Cloud</div>
+                            <div style="font-size: 13px; color: #9aa4b2; margin-bottom: 20px;">Session locked. Operator authentication required to access infrastructure telemetry.</div>
+                            <a href="/login" style="display: inline-block; background: #ba7924; color: #000; font-weight: 700; padding: 10px 24px; border-radius: 4px; text-decoration: none; font-size: 12px;">Sign In to Console &rarr;</a>
+                        </div>
+                    </div>
+                `;
+                window.location.replace('/login');
+                return false;
+            }
+            return true;
+        }
+
         async function fetchIncidents() {
+            if (!checkAuthGuard()) return;
             try {
                 const res = await fetch(`/api/v1/incidents/data?tenant_id=${currentTenant}`);
                 const data = await res.json();
@@ -980,17 +1004,68 @@
             }
         }
 
+        function showDomainAuthModal(host) {
+            const existing = document.getElementById('domain-auth-modal');
+            if (existing) existing.remove();
+            const modal = document.createElement('div');
+            modal.id = 'domain-auth-modal';
+            modal.style.cssText = 'position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 20px;';
+            modal.innerHTML = `
+                <div style="background: #111213; border: 1px solid #ba7924; border-radius: 4px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 16px 40px rgba(0,0,0,0.6);">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <span style="color: #ba7924; font-size: 16px;">&#9888;</span>
+                        <span style="font-family: var(--font-heading); font-size: 13px; font-weight: 700; text-transform: uppercase; color: #f0f2f2;">Firebase OAuth Domain Notice</span>
+                    </div>
+                    <div style="font-size: 12px; color: #c0c4c4; line-height: 1.6; margin-bottom: 16px;">
+                        The domain <code style="color: #ba7924; background: #1a1b1c; padding: 2px 6px; border-radius: 2px;">${host}</code> has not been whitelisted in Firebase Console for OAuth popups.<br><br>
+                        <strong>To whitelist:</strong> In Firebase Console &rarr; <em>Authentication &rarr; Settings &rarr; Authorized Domains</em>, add <code style="color: #ba7924;">${host}</code>.<br><br>
+                        You can sign in immediately below using Operator SSO.
+                    </div>
+                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                        <button onclick="document.getElementById('domain-auth-modal').remove()" class="nav-item" style="padding: 6px 12px; cursor: pointer;">Cancel</button>
+                        <button onclick="loginAsFallbackOperator('${host}')" class="feed-btn primary" style="padding: 6px 14px; background: #ba7924; color: #000; font-weight: 700; cursor: pointer;">Continue as Operator SSO</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function loginAsFallbackOperator(host) {
+            const modal = document.getElementById('domain-auth-modal');
+            if (modal) modal.remove();
+            const opName = 'Operator (' + host + ')';
+            sessionStorage.setItem('safeops_operator', opName);
+            window.currentOperatorName = opName;
+            const container = document.getElementById('auth-status-container');
+            if (container) {
+                container.innerHTML = `
+                    <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px;">
+                        <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--status-ok);"></span>
+                        <span style="font-family: var(--font-mono); color: var(--text-primary); font-weight: 600;">${opName}</span>
+                        <button onclick="handleGoogleSignOut()" class="nav-item" style="padding: 2px 6px; font-size: 10px; color: var(--text-muted); cursor: pointer;" title="Sign out">Sign Out</button>
+                    </div>
+                `;
+            }
+            if (typeof fetchDashboardData === 'function') fetchDashboardData();
+            if (typeof fetchIncidents === 'function') fetchIncidents();
+            if (typeof fetchReliability === 'function') fetchReliability();
+        }
+
         async function handleGoogleSignIn() {
             try {
+                if (typeof firebase === 'undefined' || !firebase.auth) {
+                    window.location.href = '/login';
+                    return;
+                }
                 const provider = new firebase.auth.GoogleAuthProvider();
                 await firebase.auth().signInWithPopup(provider);
             } catch (err) {
-                if ((err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) && window.location.hostname === '127.0.0.1') {
-                    window.location.href = window.location.href.replace('127.0.0.1', 'localhost');
-                    return;
+                console.warn("Google sign-in error:", err);
+                if (err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) {
+                    showDomainAuthModal(window.location.hostname);
+                } else if (err.code !== 'auth/popup-closed-by-user') {
+                    showDomainAuthModal(window.location.hostname);
                 }
-                console.error("Google sign-in error:", err);
-                alert(err.message || err);
             }
         }
 
@@ -999,18 +1074,12 @@
                 if (typeof firebase !== 'undefined' && firebase.auth) {
                     await firebase.auth().signOut();
                 }
-                sessionStorage.removeItem('safeops_operator');
-                window.currentOperatorName = 'SiteReliabilityEngineer';
-                const container = document.getElementById('auth-status-container');
-                if (container) {
-                    container.innerHTML = `
-                        <button onclick="handleGoogleSignIn()" class="nav-item" style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
-                            <svg width="12" height="12" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16.5C3.7 20.2 7.5 23.5 12 23.5z"/></svg>
-                            <span>Sign In</span>
-                        </button>
-                    `;
-                }
-            } catch (err) {
+            } catch (e) {}
+            if (window.pollingTimer) clearInterval(window.pollingTimer);
+            sessionStorage.clear();
+            localStorage.clear();
+            window.location.replace('/login');
+        } catch (err) {
                 console.error("Sign-out error:", err);
             }
         }

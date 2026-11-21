@@ -701,7 +701,6 @@
                 </div>
                 <div class="brand-name">
                     SafeOps Collector
-                    <span class="tier-tag">COLLECTOR / LOCAL &bull; Egress Proof Panel</span>
                     <span class="collector-beacon" id="live-indicator">
                         <span class="beacon-dot"></span>
                         Live Intercepting
@@ -717,35 +716,6 @@
                 <a href="http://127.0.0.1:8002/reliability" target="_blank" class="nav-item nav-ext">Reliability SLA &rarr;</a>
             </nav>
         </header>
-
-        <!-- 2. Zero-Trust Egress Architecture Pipeline Story -->
-        <div class="pipeline-story-bar">
-            <div class="pipeline-flow-steps">
-                <div class="flow-step">1. RAW LOCAL DATA</div>
-                <span class="step-arrow">&rarr;</span>
-                <div class="flow-step">2. FILTER</div>
-                <span class="step-arrow">&rarr;</span>
-                <div class="flow-step">3. REDACT</div>
-                <span class="step-arrow">&rarr;</span>
-                <div class="flow-step">4. PSEUDONYMIZE</div>
-                <span class="step-arrow">&rarr;</span>
-                <div class="flow-step">5. ALLOW-LIST</div>
-                <span class="step-arrow">&rarr;</span>
-                <div class="flow-step active-step">6. SAFE PAYLOAD &rarr; CLOUD</div>
-            </div>
-
-            <div class="boundary-guarantees">
-                <div class="guarantee-chip">
-                    <span>&bull;</span>
-                    <span>Secrets: <strong>Scrubbed at Edge</strong></span>
-                </div>
-                <div class="guarantee-chip">
-                    <span>&bull;</span>
-                    <span>Raw Logs: <strong>1h Local TTL</strong></span>
-                </div>
-                <button onclick="fetchData()" class="nav-item" style="font-size: 11px; padding: 3px 9px;">Refresh Now</button>
-            </div>
-        </div>
 
         <!-- 3. Live Pipeline Flow Metrics Ribbon -->
         <div class="stats-ribbon">
@@ -777,15 +747,8 @@
                 <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                 <input type="text" id="search-input" class="search-input" placeholder="Search by Payload ID, Metric (cpu, latency), Pseudonym, or Tenant..." oninput="debounceSearch()">
             </div>
-            <div class="view-toggles">
-                <div class="global-tab-toggle">
-                    <span style="font-size: 10px; color: var(--text-dim); padding: 0 4px;">VIEW ALL:</span>
-                    <button id="global-btn-side" class="global-tab-btn active" onclick="switchGlobalTab('side')">Side-by-Side</button>
-                    <button id="global-btn-raw" class="global-tab-btn" onclick="switchGlobalTab('raw')">Sensitive Data</button>
-                    <button id="global-btn-egress" class="global-tab-btn" onclick="switchGlobalTab('egress')">Outbound Metadata</button>
-                    <button id="global-btn-table" class="global-tab-btn" onclick="switchGlobalTab('table')">Policy Table</button>
-                </div>
-                <span>Real-Time Egress Proof Stream &bull; Live Stream 1s</span>
+            <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">
+                Real-Time Egress Proof Stream &bull; Live Stream 1s
             </div>
         </div>
 
@@ -1021,30 +984,8 @@
                         </div>
                     </div>
 
-                    <div class="card-tab-bar">
-                        <div class="tab-btn-group">
-                            <button class="card-tab ${activeTab === 'side' ? 'tab-active' : ''}" data-tab="side" onclick="switchTab('${cardId}', 'side')">
-                                Side-by-Side
-                            </button>
-                            <button class="card-tab tab-raw ${activeTab === 'raw' ? 'tab-active' : ''}" data-tab="raw" onclick="switchTab('${cardId}', 'raw')">
-                                Sensitive Data
-                                <span class="card-tab-badge badge-raw">Secrets</span>
-                            </button>
-                            <button class="card-tab ${activeTab === 'egress' ? 'tab-active' : ''}" data-tab="egress" onclick="switchTab('${cardId}', 'egress')">
-                                Outbound Metadata
-                                <span class="card-tab-badge badge-clean">Cloud JSON</span>
-                            </button>
-                            <button class="card-tab ${activeTab === 'table' ? 'tab-active' : ''}" data-tab="table" onclick="switchTab('${cardId}', 'table')">
-                                Policy Diff Table
-                            </button>
-                        </div>
-                        <span style="font-size: 10px; font-family: var(--font-mono); color: var(--text-dim);">
-                            Zero-Trust Boundary
-                        </span>
-                    </div>
-
-                    <!-- Pane 1: Side-by-Side (Sensitive Data on One Side + Metadata on the Next Side) -->
-                    <div class="card-pane ${activeTab === 'side' ? 'pane-active' : ''}" data-pane="side">
+                    <!-- Side-by-Side Egress Telemetry Inspection -->
+                    <div class="card-pane pane-active">
                         <div class="raw-pane-wrap">
                             <div class="raw-col">
                                 <div class="raw-col-label">
@@ -1063,30 +1004,8 @@
                         </div>
                     </div>
 
-                    <!-- Pane 2: Sensitive Data Only (Full Width) -->
-                    <div class="card-pane ${activeTab === 'raw' ? 'pane-active' : ''}" data-pane="raw">
-                        <div style="padding: 14px 18px;">
-                            <div class="raw-col-label">
-                                <span>Full Client Telemetry &amp; Sensitive Authentication Logs</span>
-                                <span class="card-tab-badge badge-raw">Isolated on Edge</span>
-                            </div>
-                            <div class="raw-json-block" style="max-height: 380px;">${rawFormatted}</div>
-                        </div>
-                    </div>
-
-                    <!-- Pane 3: Outbound Metadata Only (Full Width JSON Uploaded to SaaS) -->
-                    <div class="card-pane ${activeTab === 'egress' ? 'pane-active' : ''}" data-pane="egress">
-                        <div style="padding: 14px 18px;">
-                            <div class="raw-col-label">
-                                <span>Sanitized Metadata Payload Uploaded to SafeOps Cloud (Port 8002)</span>
-                                <span class="card-tab-badge badge-clean">Zero-Trust Egress Compliant</span>
-                            </div>
-                            <div class="raw-json-block" style="max-height: 380px;">${egressFormatted}</div>
-                        </div>
-                    </div>
-
-                    <!-- Pane 4: Zero-Trust Policy Table -->
-                    <div class="card-pane ${activeTab === 'table' ? 'pane-active' : ''}" data-pane="table">
+                    <!-- Zero-Trust Policy Table -->
+                    <div style="padding: 0 16px 16px 16px;">
                         <table class="diff-table">
                             <thead>
                                 <tr>

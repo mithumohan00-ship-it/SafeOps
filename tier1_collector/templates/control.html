@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Unbounded:wght@600;700;800&display=swap"
+        rel="stylesheet">
     <title>SafeOps | Chaos & Demo Operations Console</title>
     <style>
         :root {
@@ -20,7 +23,7 @@
             --text-secondary: #c0c4c4;
             --text-muted: #7c7f80;
             --text-dim: #4d5052;
-            
+
             --accent: #ba7924;
             --accent-light: #e9c28f;
             --accent-muted: rgba(186, 121, 36, 0.12);
@@ -50,8 +53,12 @@
             --transition-smooth: 0.2s ease-out;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             background-color: var(--bg-base);
             color: var(--text-primary);
@@ -261,8 +268,13 @@
             transition: border-color var(--transition-fast);
         }
 
-        .custom-select:hover { border-color: var(--border-hover); }
-        .custom-select:focus { border-color: var(--border-focus); }
+        .custom-select:hover {
+            border-color: var(--border-hover);
+        }
+
+        .custom-select:focus {
+            border-color: var(--border-focus);
+        }
 
         /* 3. Universal Feed Engine Panel */
         .feed-panel {
@@ -446,9 +458,9 @@
                 transition: none !important;
             }
         }
-
     </style>
 </head>
+
 <body>
 
     <div class="layout-container">
@@ -456,7 +468,9 @@
         <header class="app-header">
             <div class="brand-cluster">
                 <div class="brand-mark">
-                    <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                    </svg>
                 </div>
                 <div class="brand-name">
                     SafeOps Collector
@@ -467,16 +481,20 @@
                 <a href="/egress" class="nav-item">Egress Proof Panel</a>
                 <a href="/control" class="nav-item active">Chaos & Demo Control Panel</a>
                 <span class="nav-divider"></span>
-                <a href="http://127.0.0.1:8002" target="_blank" class="nav-item nav-ext">Fleet Overview (Port 8002) &rarr;</a>
-                <a href="http://127.0.0.1:8002/incidents" target="_blank" class="nav-item nav-ext">AIOps Incidents &rarr;</a>
-                <a href="http://127.0.0.1:8002/reliability" target="_blank" class="nav-item nav-ext">Reliability SLA &rarr;</a>
+                <a href="http://127.0.0.1:8002" target="_blank" class="nav-item nav-ext">Fleet Overview (Port 8002)
+                    &rarr;</a>
+                <a href="http://127.0.0.1:8002/incidents" target="_blank" class="nav-item nav-ext">AIOps Incidents
+                    &rarr;</a>
+                <a href="http://127.0.0.1:8002/reliability" target="_blank" class="nav-item nav-ext">Reliability SLA
+                    &rarr;</a>
             </nav>
         </header>
 
         <!-- Notification Toast (Preserving id="toast" & id="toast-msg") -->
         <div id="toast" class="toast-strip">
             <span id="toast-msg">Scenario successfully triggered</span>
-            <button onclick="document.getElementById('toast').style.display='none'" style="background: none; border: none; color: var(--text-muted); font-size: 14px; cursor: pointer;">&times;</button>
+            <button onclick="document.getElementById('toast').style.display='none'"
+                style="background: none; border: none; color: var(--text-muted); font-size: 14px; cursor: pointer;">&times;</button>
         </div>
 
         <!-- 2. Target Selector Bar (Preserving tenant-select & host-select) -->
@@ -494,7 +512,8 @@
                     <select id="host-select" class="custom-select"></select>
                 </div>
             </div>
-            <button class="nav-item" onclick="triggerChaos('clear_chaos')" style="font-size: 11px;">Clear All Injected Chaos</button>
+            <button class="nav-item" onclick="triggerChaos('clear_chaos')" style="font-size: 11px;">Clear All Injected
+                Chaos</button>
         </div>
 
         <!-- 3. Universal Telemetry Feed Engine (Preserving format-mode-select & adapter-badge) -->
@@ -502,7 +521,8 @@
             <div class="feed-header">
                 <div>
                     <span class="feed-title">Telemetry Input Adapter & Ingest Mode</span>
-                    <span style="font-size: 11px; color: var(--text-muted); margin-left: 8px;">Reads JSON Lines, CSV, Syslog (RFC 5424/3164), or HTTP push stream.</span>
+                    <span style="font-size: 11px; color: var(--text-muted); margin-left: 8px;">Reads JSON Lines, CSV,
+                        Syslog (RFC 5424/3164), or HTTP push stream.</span>
                 </div>
                 <span id="adapter-badge" class="tier-tag">MODE: SIMULATOR (JSONL)</span>
             </div>
@@ -520,36 +540,48 @@
                     </select>
                 </div>
 
-                <button id="btn-sample-csv" class="feed-btn" onclick="loadSampleFeed('csv')">Load Sample CSV</button>
-                <button id="btn-sample-syslog" class="feed-btn" onclick="loadSampleFeed('syslog')">Load Sample Syslog</button>
-                <button id="btn-sample-jsonl" class="feed-btn" onclick="loadSampleFeed('jsonl')">Load Sample JSONL</button>
-                <button id="btn-sample-reset" class="feed-btn primary" onclick="loadSampleFeed('simulator')">Reset Simulator</button>
-                <input type="file" id="system-file-input" style="display: none;" onchange="uploadSystemFile(event)" accept=".csv,.log,.syslog,.json,.jsonl,.txt,.data">
-                <button id="btn-upload-file" class="feed-btn" onclick="document.getElementById('system-file-input').click()">Upload System File &#128194;</button>
-                <button class="feed-btn" onclick="toggleHttpDrawer()" style="margin-left: auto;">HTTP Push / Path Console &#9662;</button>
+                <button id="btn-sample-reset" class="feed-btn primary" onclick="loadSampleFeed('simulator')">Reset
+                    Simulator</button>
+                <input type="file" id="system-file-input" style="display: none;" onchange="uploadSystemFile(event)"
+                    accept=".csv,.log,.syslog,.json,.jsonl,.txt,.data">
+                <button id="btn-upload-file" class="feed-btn"
+                    onclick="document.getElementById('system-file-input').click()">Upload System File &#128194;</button>
+                <button class="feed-btn" onclick="toggleHttpDrawer()" style="margin-left: auto;">HTTP Push / Path
+                    Console &#9662;</button>
             </div>
 
-            <div id="feed-status-banner" style="display: none; margin-top: 10px; padding: 7px 12px; background: rgba(0, 255, 65, 0.08); border-left: 3px solid var(--accent); font-family: var(--font-mono); font-size: 11px; color: var(--accent); border-radius: 2px;">
+            <div id="feed-status-banner"
+                style="display: none; margin-top: 10px; padding: 7px 12px; background: rgba(0, 255, 65, 0.08); border-left: 3px solid var(--accent); font-family: var(--font-mono); font-size: 11px; color: var(--accent); border-radius: 2px;">
                 <span id="feed-status-text">Feed loaded successfully.</span>
             </div>
 
             <!-- HTTP Push Drawer (Preserving http-push-drawer & http-payload-input) -->
             <div id="http-push-drawer" class="http-drawer" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">POST /api/v1/adapter/push Ingestion</span>
+                    <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">POST
+                        /api/v1/adapter/push Ingestion</span>
                     <div style="display: flex; gap: 4px;">
-                        <button class="feed-btn" style="padding: 2px 6px; font-size: 10px;" onclick="prefillHttpPayload('json')">Sample JSON</button>
-                        <button class="feed-btn" style="padding: 2px 6px; font-size: 10px;" onclick="prefillHttpPayload('csv')">Sample CSV</button>
-                        <button class="feed-btn" style="padding: 2px 6px; font-size: 10px;" onclick="prefillHttpPayload('syslog')">Sample Syslog</button>
+                        <button class="feed-btn" style="padding: 2px 6px; font-size: 10px;"
+                            onclick="prefillHttpPayload('json')">Sample JSON</button>
+                        <button class="feed-btn" style="padding: 2px 6px; font-size: 10px;"
+                            onclick="prefillHttpPayload('csv')">Sample CSV</button>
+                        <button class="feed-btn" style="padding: 2px 6px; font-size: 10px;"
+                            onclick="prefillHttpPayload('syslog')">Sample Syslog</button>
                     </div>
                 </div>
-                <textarea id="http-payload-input" class="code-area" placeholder="Paste single raw telemetry line here..."></textarea>
+                <textarea id="http-payload-input" class="code-area"
+                    placeholder="Paste single raw telemetry line here..."></textarea>
                 <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
                     <button class="feed-btn primary" onclick="sendHttpPush()">Send Line to Collector</button>
                 </div>
-                <div style="display: flex; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-subtle); align-items: center;">
-                    <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Stream Direct System File Path:</span>
-                    <input id="system-path-input" type="text" class="custom-select" style="flex: 1; padding: 4px 8px; font-family: var(--font-mono); font-size: 11px;" placeholder="/var/log/system.log or /path/to/test.csv">
+                <div
+                    style="display: flex; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-subtle); align-items: center;">
+                    <span
+                        style="font-size: 11px; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Stream
+                        Direct System File Path:</span>
+                    <input id="system-path-input" type="text" class="custom-select"
+                        style="flex: 1; padding: 4px 8px; font-family: var(--font-mono); font-size: 11px;"
+                        placeholder="/var/log/system.log or /path/to/test.csv">
                     <button class="feed-btn" onclick="connectSystemFilePath()">Connect File</button>
                 </div>
             </div>
@@ -563,7 +595,8 @@
             <div class="scenario-box">
                 <div>
                     <div class="sc-heading"><span class="sc-num">1</span> Secret Leak in Raw Log Line</div>
-                    <p class="sc-desc">Injects raw passwords, bearer tokens, internal IPs, and emails into log stream. Check Egress Panel to verify 100% regex redaction.</p>
+                    <p class="sc-desc">Injects raw passwords, bearer tokens, internal IPs, and emails into log stream.
+                        Check Egress Panel to verify 100% regex redaction.</p>
                 </div>
                 <button class="trigger-btn" onclick="triggerChaos('secret_in_log')">
                     Inject Secret Leak Scenario
@@ -573,7 +606,8 @@
             <div class="scenario-box">
                 <div>
                     <div class="sc-heading"><span class="sc-num">2</span> Brute-Force Auth Attack</div>
-                    <p class="sc-desc">Generates rapid bursts of failed logins. Tier 1 counts locally and sends ONLY mathematical summary count, never raw log lines.</p>
+                    <p class="sc-desc">Generates rapid bursts of failed logins. Tier 1 counts locally and sends ONLY
+                        mathematical summary count, never raw log lines.</p>
                 </div>
                 <button class="trigger-btn" onclick="triggerChaos('repeated_failed_logins')">
                     Inject Brute-Force Attack
@@ -587,7 +621,8 @@
             <div class="scenario-box">
                 <div>
                     <div class="sc-heading"><span class="sc-num">3</span> CPU Spike (Statistical Anomaly)</div>
-                    <p class="sc-desc">Spikes CPU load to 98% for 25s. Triggers dynamic baseline 3-sigma z-score anomaly on Tier 2 SaaS.</p>
+                    <p class="sc-desc">Spikes CPU load to 98% for 25s. Triggers dynamic baseline 3-sigma z-score anomaly
+                        on Tier 2 SaaS.</p>
                 </div>
                 <button class="trigger-btn" onclick="triggerChaos('cpu_spike', {duration: 25})">
                     Inject CPU Spike (98%)
@@ -597,7 +632,8 @@
             <div class="scenario-box">
                 <div>
                     <div class="sc-heading"><span class="sc-num">4</span> Network Latency Rise</div>
-                    <p class="sc-desc">Drives round-trip delay up to 450ms+ (baseline: ~25ms). Verifies dynamic threshold detection.</p>
+                    <p class="sc-desc">Drives round-trip delay up to 450ms+ (baseline: ~25ms). Verifies dynamic
+                        threshold detection.</p>
                 </div>
                 <button class="trigger-btn" onclick="triggerChaos('latency_rise', {duration: 25})">
                     Inject Latency Surge (450ms)
@@ -611,7 +647,8 @@
             <div class="scenario-box">
                 <div>
                     <div class="sc-heading"><span class="sc-num">5</span> Service Process Down (Crash)</div>
-                    <p class="sc-desc">Simulates daemon termination (service_status = 0). Merges with metric anomalies into an incident within 120s.</p>
+                    <p class="sc-desc">Simulates daemon termination (service_status = 0). Merges with metric anomalies
+                        into an incident within 120s.</p>
                 </div>
                 <button class="trigger-btn" onclick="triggerChaos('service_down', {duration: 30})">
                     Terminate Service (DOWN)
@@ -621,7 +658,8 @@
             <div class="scenario-box">
                 <div>
                     <div class="sc-heading"><span class="sc-num">6</span> Packet Loss Elevation</div>
-                    <p class="sc-desc">Injects 10% packet drop on host network fabric. Health engine re-evaluates host to POOR.</p>
+                    <p class="sc-desc">Injects 10% packet drop on host network fabric. Health engine re-evaluates host
+                        to POOR.</p>
                 </div>
                 <button class="trigger-btn" onclick="triggerChaos('packet_loss', {duration: 25})">
                     Inject Packet Drop (10%)
@@ -635,7 +673,8 @@
             <div class="scenario-box">
                 <div>
                     <div class="sc-heading"><span class="sc-num">7</span> SaaS Cloud WAN Outage</div>
-                    <p class="sc-desc">Cuts HTTP link to cloud. Demonstrates Tier 1 durable SQLite queue buffering without dropping records.</p>
+                    <p class="sc-desc">Cuts HTTP link to cloud. Demonstrates Tier 1 durable SQLite queue buffering
+                        without dropping records.</p>
                 </div>
                 <button class="trigger-btn" id="outage-btn" onclick="triggerChaos('saas_outage')">
                     <span id="outage-btn-text">Toggle SaaS Outage</span>
@@ -645,7 +684,8 @@
             <div class="scenario-box">
                 <div>
                     <div class="sc-heading"><span class="sc-num">8</span> Duplicate & Out-of-Order Events</div>
-                    <p class="sc-desc">Injects replayed and timestamp-jittered packets. Tier 2 proves zero duplicate acceptance via UUID primary keys.</p>
+                    <p class="sc-desc">Injects replayed and timestamp-jittered packets. Tier 2 proves zero duplicate
+                        acceptance via UUID primary keys.</p>
                 </div>
                 <button class="trigger-btn" onclick="triggerChaos('duplicate_events')">
                     Inject Duplicates / Out-of-Order
@@ -654,8 +694,10 @@
 
             <div class="scenario-box">
                 <div>
-                    <div class="sc-heading"><span class="sc-num">9</span> Stop Collector Heartbeat (Offline Beacon Test)</div>
-                    <p class="sc-desc">Pauses background heartbeat loop. Watch SaaS dashboard timer cross 60s and transition collector beacon to OFFLINE.</p>
+                    <div class="sc-heading"><span class="sc-num">9</span> Stop Collector Heartbeat (Offline Beacon Test)
+                    </div>
+                    <p class="sc-desc">Pauses background heartbeat loop. Watch SaaS dashboard timer cross 60s and
+                        transition collector beacon to OFFLINE.</p>
                 </div>
                 <button class="trigger-btn" id="hb-btn" onclick="triggerChaos('toggle_heartbeat')">
                     <span id="hb-btn-text">Toggle Collector Heartbeat</span>
@@ -669,12 +711,12 @@
             "tenant-a": [
                 { id: "srv-prod-web-01.internal", name: "Web Layer (srv-prod-web-01.internal)" },
                 { id: "srv-prod-app-01.internal", name: "Application Layer (srv-prod-app-01.internal)" },
-                { id: "srv-prod-db-01.internal",  name: "Database (srv-prod-db-01.internal)" }
+                { id: "srv-prod-db-01.internal", name: "Database (srv-prod-db-01.internal)" }
             ],
             "tenant-b": [
                 { id: "corp-payment-01.local", name: "Payment Gateway (corp-payment-01.local)" },
-                { id: "corp-order-01.local",   name: "Order Processing (corp-order-01.local)" },
-                { id: "corp-auth-01.local",    name: "Auth Directory (corp-auth-01.local)" }
+                { id: "corp-order-01.local", name: "Order Processing (corp-order-01.local)" },
+                { id: "corp-auth-01.local", name: "Auth Directory (corp-auth-01.local)" }
             ]
         };
 
@@ -814,7 +856,7 @@
             }
             try {
                 const reader = new FileReader();
-                reader.onload = async function() {
+                reader.onload = async function () {
                     try {
                         const content = reader.result;
                         const res = await fetch('/api/v1/adapter/upload', {
@@ -929,4 +971,5 @@
         }
     </script>
 </body>
+
 </html>
