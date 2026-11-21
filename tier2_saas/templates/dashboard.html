@@ -1396,7 +1396,11 @@
                 }
 
                 // Update CPU Lifeline ECG Monitor
-                updateHostECG(hid, cpuVal, state, m.cpu_usage_pct);
+                try {
+                    updateHostECG(hid, cpuVal, state, m.cpu_usage_pct);
+                } catch (e) {
+                    console.error("ECG update error:", e);
+                }
 
                 // Update Memory
                 const memVal = m.memory_usage_pct ? m.memory_usage_pct.value : null;
@@ -1467,6 +1471,7 @@
             // Determine if host is in ANOMALY state for CPU:
             // Only flag CPU as ANOMALY when CPU utilization is genuinely elevated (>= 75.0%),
             // or marked POOR specifically due to high compute (>= 70.0%), never on nominal baseline (~30-45%).
+            const cpuHealth = cpuMetric ? cpuMetric.health_state : 'GOOD';
             const isStale = (overallHealth === 'POOR' && cpuMetric && cpuMetric.short_context && cpuMetric.short_context.includes('Stale data'));
             const isAnomaly = !isStale && ((cpuVal >= 75.0) || (cpuHealth === 'POOR' && cpuVal >= 70.0) || (overallHealth === 'POOR' && cpuVal >= 70.0));
 
