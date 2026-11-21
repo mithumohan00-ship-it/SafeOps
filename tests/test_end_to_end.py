@@ -56,6 +56,16 @@ class TestEndToEndSystem(unittest.IsolatedAsyncioTestCase):
         """Verify Tier 2 web interfaces and multi-tenant APIs."""
         transport = ASGITransport(app=saas_app)
         async with AsyncClient(transport=transport, base_url="http://127.0.0.1:8002") as client:
+            # Landing & Login Portal HTML
+            res_landing = await client.get("/")
+            self.assertEqual(res_landing.status_code, 200)
+            self.assertIn("SafeOps Cloud", res_landing.text)
+            self.assertIn("Operations Portal Sign In", res_landing.text)
+
+            res_login = await client.get("/login")
+            self.assertEqual(res_login.status_code, 200)
+            self.assertIn("SafeOps Cloud", res_login.text)
+
             # Dashboard HTML
             res_dash = await client.get("/dashboard")
             self.assertEqual(res_dash.status_code, 200)

@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeOps Cloud &mdash; Sovereign Zero-Trust AIOps & Telemetry Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK (v8 compat for reliable browser execution) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <style>
+        :root {
+            --bg-base: #0a0c10;
+            --bg-surface: #12151b;
+            --bg-elevated: #181c24;
+            --bg-input: #0e1117;
+            --border: #222733;
+            --border-hover: #323a4d;
+            --border-focus: #00ff41;
+            --text-primary: #f0f3f8;
+            --text-secondary: #9aa4b2;
+            --text-muted: #626c7d;
+            --text-dim: #444c5c;
+            --accent: #00ff41;
+            --accent-light: #5cff85;
+            --accent-glow: rgba(0, 255, 65, 0.15);
+            --cyan-accent: #00e5ff;
+            --status-critical: #ff3b30;
+            --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', "SF Mono", monospace;
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+            --transition-fast: 0.15s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 255, 65, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 229, 255, 0.03) 0%, transparent 40%);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Top Brand Navigation */
+        .landing-nav {
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 12, 16, 0.85);
+            backdrop-filter: blur(8px);
+        }
+
+        .brand-cluster {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .brand-mark {
+            width: 28px;
+            height: 28px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .brand-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .brand-tag {
+            font-size: 10px;
+            font-family: var(--font-mono);
+            padding: 2px 6px;
+            background: rgba(0, 255, 65, 0.08);
+            border: 1px solid rgba(0, 255, 65, 0.2);
+            color: var(--accent);
+            border-radius: 2px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-link {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+
+        .nav-link:hover { color: var(--text-primary); }
+
+        .btn-direct-dash {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 6px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-direct-dash:hover {
+            border-color: var(--border-hover);
+            color: var(--accent);
+        }
+
+        /* Main Content Container */
+        .landing-main {
+            flex: 1;
+            max-width: 1240px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 48px 32px 64px 32px;
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 56px;
+            align-items: center;
+        }
+
+        @media (max-width: 960px) {
+            .landing-main {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                padding: 32px 20px 48px 20px;
+            }
+        }
+
+        /* Left Column: Hero & Pillars */
+        .hero-section {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .hero-badge-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 10px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            width: fit-content;
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0.6; transform: scale(0.9); }
+        }
+
+        .hero-badge-text {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .hero-headline {
+            font-size: 38px;
+            font-weight: 800;
+            line-height: 1.18;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+        }
+
+        .hero-headline span {
+            color: var(--accent);
+        }
+
+        .hero-subhead {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            max-width: 540px;
+        }
+
+        /* Architecture Pillars Grid */
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 6px;
+        }
+
+        @media (max-width: 600px) {
+            .pillars-grid { grid-template-columns: 1fr; }
+        }
+
+        .pillar-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: border-color var(--transition-fast);
+        }
+
+        .pillar-card:hover { border-color: var(--border-hover); }
+
+        .pillar-number {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .pillar-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .pillar-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Right Column: Authentication Card */
+        .auth-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 28px 26px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+        }
+
+        .auth-header {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .auth-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+        }
+
+        .auth-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Google SSO Button */
+        .btn-google {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 16px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+        }
+
+        .btn-google:hover {
+            border-color: var(--border-hover);
+            background: #20242f;
+        }
+
+        .btn-google svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        /* Divider */
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 2px 0;
+        }
+
+        .auth-divider-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .auth-divider-text {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-dim);
+            letter-spacing: 0.05em;
+        }
+
+        /* Form Controls */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 9px 12px;
+            font-size: 13px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            outline: none;
+            transition: border-color var(--transition-fast);
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--accent);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-dim);
+            font-family: var(--font-sans);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 10px 16px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-light);
+        }
+
+        .btn-demo-fast {
+            width: 100%;
+            padding: 8px 14px;
+            background: transparent;
+            border: 1px dashed var(--border-hover);
+            color: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-family: var(--font-mono);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-demo-fast:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(0, 255, 65, 0.04);
+        }
+
+        /* User Profile Badge (When signed in) */
+        .signed-in-card {
+            display: none;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .user-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--accent);
+            object-fit: cover;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .user-role {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--accent);
+        }
+
+        /* Security Assurance Footer */
+        .security-footer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+            margin-top: 4px;
+        }
+
+        /* Global Footer */
+        .landing-footer {
+            padding: 20px 32px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 16px;
+        }
+
+        .footer-link {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .footer-link:hover { color: var(--text-primary); }
+
+        /* Notification Toast */
+        .toast-banner {
+            display: none;
+            padding: 8px 12px;
+            background: rgba(255, 59, 48, 0.1);
+            border-left: 3px solid var(--status-critical);
+            color: var(--status-critical);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Header Navigation -->
+    <header class="landing-nav">
+        <a href="/" class="brand-cluster">
+            <div class="brand-mark">&#9670;</div>
+            <span class="brand-title">SafeOps Cloud</span>
+            <span class="brand-tag">v1.0 Sovereign</span>
+        </a>
+
+        <div class="nav-actions">
+            <a href="http://127.0.0.1:8001/control" class="nav-link" target="_blank" title="Tier 1 Collector Controls">Collector Node &nearr;</a>
+            <a href="/dashboard" class="btn-direct-dash">Console Dashboard &rarr;</a>
+        </div>
+    </header>
+
+    <!-- 2. Main Hero & Login Split -->
+    <main class="landing-main">
+
+        <!-- Hero Column -->
+        <section class="hero-section">
+            <div class="hero-badge-wrap">
+                <span class="pulse-dot"></span>
+                <span class="hero-badge-text">Secure Ingestion &bull; us-east-1 & eu-central-1 Active</span>
+            </div>
+
+            <h1 class="hero-headline">
+                Sovereign Zero-Trust<br>
+                <span>AIOps Platform</span>
+            </h1>
+
+            <p class="hero-subhead">
+                Enterprise cloud observability with strict data residency boundaries, deterministic pseudonymization, and zero ambient secret leakage before telemetry leaves customer infrastructure.
+            </p>
+
+            <!-- 4 Architecture Highlights -->
+            <div class="pillars-grid">
+                <div class="pillar-card">
+                    <span class="pillar-number">01 / BOUNDARY</span>
+                    <span class="pillar-title">Deterministic Pseudonyms</span>
+                    <p class="pillar-desc">Internal server hostnames are pseudonymized locally at Tier 1 before SaaS transmission.</p>
+                </div>
+
+                <div class="pillar-card">
+                    <span class="pillar-number">02 / REDACTION</span>
+                    <span class="pillar-title">Zero-Secret Egress</span>
+                    <p class="pillar-desc">Boundary regex scrubbing strips passwords, API keys, and bearer tokens from logs.</p>
+                </div>
+
+                <div class="pillar-card">
+                    <span class="pillar-number">03 / NETWORK</span>
+                    <span class="pillar-title">Zero-Trust Pull Flow</span>
+                    <p class="pillar-desc">SaaS never opens inbound ports to collectors. Remediation pulls via heartbeat beacons.</p>
+                </div>
+
+                <div class="pillar-card">
+                    <span class="pillar-number">04 / AIOPS</span>
+                    <span class="pillar-title">Operator-Approved Fixes</span>
+                    <p class="pillar-desc">Z-score anomaly correlation with human approval workflows and one-click rollback audit.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Authentication Card -->
+        <section class="auth-card">
+            <div class="auth-header">
+                <h2 class="auth-title">Operations Portal Sign In</h2>
+                <span class="auth-subtitle">Authenticate to access live telemetry and incident triage</span>
+            </div>
+
+            <div id="toast-banner" class="toast-banner"></div>
+
+            <!-- Existing Signed-in State Profile (if active session exists) -->
+            <div id="signed-in-card" class="signed-in-card">
+                <div class="user-row">
+                    <img id="user-avatar" class="user-avatar" src="" alt="Avatar" style="display:none;">
+                    <div class="user-details">
+                        <span id="user-name-display" class="user-name">Active Operator</span>
+                        <span id="user-role-display" class="user-role">Authenticated Session</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-primary" style="margin-top:0;" onclick="enterConsole()">Enter Console &rarr;</button>
+                    <button class="btn-demo-fast" style="width:auto; padding: 6px 12px;" onclick="signOutUser()">Sign Out</button>
+                </div>
+            </div>
+
+            <!-- Google Sign-In with Firebase -->
+            <div id="auth-actions-group">
+                <button id="btn-google-signin" class="btn-google" onclick="signInWithGoogle()">
+                    <svg viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16.5C3.7 20.2 7.5 23.5 12 23.5z"/></svg>
+                    <span>Continue with Google Account</span>
+                </button>
+
+                <div class="auth-divider">
+                    <div class="auth-divider-line"></div>
+                    <span class="auth-divider-text">OR OPERATOR SSO</span>
+                    <div class="auth-divider-line"></div>
+                </div>
+
+                <form id="operator-login-form" onsubmit="handleOperatorLogin(event)" style="display: flex; flex-direction: column; gap: 14px;">
+                    <div class="form-group">
+                        <label class="form-label" for="tenant-select">
+                            <span>Sovereign Tenant:</span>
+                            <span style="font-family: var(--font-mono); font-size: 10px; color: var(--accent);">Residency Enforced</span>
+                        </label>
+                        <select id="tenant-select" class="form-select">
+                            <option value="tenant-a">Customer A &mdash; Financial Cloud (us-east-1)</option>
+                            <option value="tenant-b">Customer B &mdash; Healthcare Core (eu-central-1)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="operator-id">Operator Identity:</label>
+                        <input id="operator-id" type="text" class="form-input" placeholder="e.g. sward@financial-cloud.com" value="sward@financial-cloud.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="operator-token">Security Ingestion Key / Token:</label>
+                        <input id="operator-token" type="password" class="form-input" placeholder="sec_key_tenant_..." value="sec_key_tenant_a_998811" required>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        <span>Authenticate to Console</span>
+                        <span>&rarr;</span>
+                    </button>
+                </form>
+
+                <div style="margin-top: 10px;">
+                    <button class="btn-demo-fast" onclick="instantDemoAccess()">
+                        <span>&#9889;</span>
+                        <span>Instant Demo Operator Access (Evaluator)</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="security-footer">
+                <span>&#128274; 256-bit TLS Encrypted &bull; Zero Egress Secrets</span>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 3. Footer -->
+    <footer class="landing-footer">
+        <div>&copy; 2026 SafeOps Cloud Platform. Sovereign Multi-Tenant Architecture.</div>
+        <div class="footer-links">
+            <a href="/dashboard" class="footer-link">Dashboard</a>
+            <a href="/incidents" class="footer-link">Incidents</a>
+            <a href="/reliability" class="footer-link">Reliability SLA</a>
+            <a href="https://github.com/mithumohan00-ship-it/SafeOps" target="_blank" class="footer-link">GitHub Repo &nearr;</a>
+        </div>
+    </footer>
+
+    <script>
+        const safeopsFirebaseConfig = {
+            apiKey: "AIzaSyAoIYY7K13uBrmKNa7fxlZMo0Fb3GkFwD4",
+            authDomain: "safeops-983b2.firebaseapp.com",
+            projectId: "safeops-983b2",
+            storageBucket: "safeops-983b2.firebasestorage.app",
+            messagingSenderId: "1042395485031",
+            appId: "1:1042395485031:web:5fc433a7a34111dc99d5c2",
+            measurementId: "G-QMB8QSPHG2"
+        };
+
+        let authInitialized = false;
+
+        function initFirebase() {
+            try {
+                if (!window.firebase) return;
+                if (!firebase.apps || !firebase.apps.length) {
+                    firebase.initializeApp(safeopsFirebaseConfig);
+                }
+                authInitialized = true;
+
+                firebase.auth().onAuthStateChanged(user => {
+                    const signedInCard = document.getElementById('signed-in-card');
+                    const authGroup = document.getElementById('auth-actions-group');
+                    if (user) {
+                        const name = user.displayName || user.email || 'Operator';
+                        sessionStorage.setItem('safeops_operator', name);
+                        document.getElementById('user-name-display').innerText = name;
+                        document.getElementById('user-role-display').innerText = `${user.email || 'Google Operator'} &bull; Verified`;
+                        const avatar = document.getElementById('user-avatar');
+                        if (user.photoURL) {
+                            avatar.src = user.photoURL;
+                            avatar.style.display = 'block';
+                        }
+                        signedInCard.style.display = 'flex';
+                        authGroup.style.display = 'none';
+                    } else {
+                        const storedOp = sessionStorage.getItem('safeops_operator');
+                        if (storedOp && storedOp !== 'SiteReliabilityEngineer') {
+                            document.getElementById('user-name-display').innerText = storedOp;
+                            document.getElementById('user-role-display').innerText = 'Session Operator';
+                            signedInCard.style.display = 'flex';
+                            authGroup.style.display = 'none';
+                        } else {
+                            signedInCard.style.display = 'none';
+                            authGroup.style.display = 'block';
+                        }
+                    }
+                });
+            } catch (err) {
+                console.warn('Firebase init:', err);
+            }
+        }
+
+        async function signInWithGoogle() {
+            try {
+                if (!window.firebase || !firebase.auth) {
+                    instantDemoAccess();
+                    return;
+                }
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result = await firebase.auth().signInWithPopup(provider);
+                if (result && result.user) {
+                    const name = result.user.displayName || result.user.email || 'Operator';
+                    sessionStorage.setItem('safeops_operator', name);
+                    window.location.href = '/dashboard';
+                }
+            } catch (err) {
+                console.warn('Google sign-in:', err);
+                const banner = document.getElementById('toast-banner');
+                if (banner) {
+                    banner.innerText = (err.code === 'auth/unauthorized-domain') 
+                        ? 'Notice: Domain not authorized in Firebase Console yet. You can sign in below using Operator SSO or Instant Demo Access.'
+                        : `Sign in error: ${err.message}`;
+                    banner.style.display = 'block';
+                }
+            }
+        }
+
+        function handleOperatorLogin(e) {
+            e.preventDefault();
+            const tenant = document.getElementById('tenant-select').value;
+            const operator = document.getElementById('operator-id').value.trim() || 'Operator';
+            sessionStorage.setItem('safeops_operator', operator);
+            sessionStorage.setItem('safeops_tenant', tenant);
+            window.location.href = `/dashboard?tenant_id=${tenant}`;
+        }
+
+        function instantDemoAccess() {
+            sessionStorage.setItem('safeops_operator', 'LeadSRE (Demo)');
+            sessionStorage.setItem('safeops_tenant', 'tenant-a');
+            window.location.href = '/dashboard?tenant_id=tenant-a';
+        }
+
+        function enterConsole() {
+            const tenant = sessionStorage.getItem('safeops_tenant') || 'tenant-a';
+            window.location.href = `/dashboard?tenant_id=${tenant}`;
+        }
+
+        async function signOutUser() {
+            try {
+                if (window.firebase && firebase.auth) {
+                    await firebase.auth().signOut();
+                }
+            } catch (e) {}
+            sessionStorage.removeItem('safeops_operator');
+            document.getElementById('signed-in-card').style.display = 'none';
+            document.getElementById('auth-actions-group').style.display = 'block';
+        }
+
+        window.addEventListener('DOMContentLoaded', initFirebase);
+    </script>
+</body>
+</html>

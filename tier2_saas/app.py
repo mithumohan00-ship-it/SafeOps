@@ -163,9 +163,20 @@ async def receive_heartbeat(
 # Web UI Endpoints
 # ==========================================
 
-@app.get("/", response_class=RedirectResponse)
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return RedirectResponse(url="/dashboard")
+    """Dedicated landing and login portal for SafeOps Cloud SaaS."""
+    html_file = os.path.join(TEMPLATES_DIR, "login.html")
+    with open(html_file, "r") as f:
+        return HTMLResponse(content=f.read())
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page():
+    """Dedicated login page alias."""
+    html_file = os.path.join(TEMPLATES_DIR, "login.html")
+    with open(html_file, "r") as f:
+        return HTMLResponse(content=f.read())
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
