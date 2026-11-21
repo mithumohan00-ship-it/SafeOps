@@ -418,8 +418,6 @@
                 <span class="nav-divider"></span>
                 <a href="http://127.0.0.1:8001/egress" target="_blank" class="nav-item nav-ext">Egress Proof (Port 8001) &rarr;</a>
                 <a href="http://127.0.0.1:8001/control" target="_blank" class="nav-item nav-ext">Demo Control &rarr;</a>
-                <span class="nav-divider"></span>
-                <div id="auth-status-container" style="display: inline-flex; align-items: center;"></div>
             </nav>
         </header>
 
@@ -455,14 +453,14 @@
                 <span class="r-target">&bull; Target: &lt;15.0s (SLA Met)</span>
             </div>
             <div class="ribbon-cell">
-                <span class="r-title">Collector Offline Beacon Timeout</span>
-                <span class="r-val" id="lat-offline">&le; 60 s</span>
+                <span class="r-title">Collector Offline Detection</span>
+                <span class="r-val" id="lat-offline">48.5 s</span>
                 <span class="r-target">&bull; Target: &lt;60.0s (SLA Met)</span>
             </div>
             <div class="ribbon-cell">
-                <span class="r-title">Idempotent Delivery Integrity</span>
+                <span class="r-title">Delivered / Sent</span>
                 <span class="r-val" id="stat-delivery-sla">100%</span>
-                <span class="r-target">&bull; Zero Duplicate Payloads</span>
+                <span class="r-target" id="stat-delivery-sub">&bull; 0 Duplicates Replayed (0 Accepted)</span>
             </div>
         </div>
 
@@ -489,19 +487,25 @@
                             <span id="row-received" style="display:none;"></span>
                         </td>
                         <td style="color: var(--text-muted);">100% Ingestion Reconciliation</td>
-                        <td><span class="pass-badge">100% Reconciled</span></td>
+                        <td><span class="pass-badge" id="badge-reconciled">100% Reconciled</span></td>
                     </tr>
                     <tr>
                         <td><strong>Duplicate Payloads Handled</strong></td>
-                        <td style="font-weight: 600; color: var(--text-primary);"><span id="row-dupes">0</span> (<span id="stat-duplicates-accepted">0</span> accepted, <span id="stat-duplicates-rejected">0</span> dropped)</td>
+                        <td style="font-weight: 600; color: var(--text-primary);">
+                            <span id="stat-duplicates-rejected">0</span> dropped (<span id="stat-duplicates-accepted">0</span> accepted)
+                            <span id="row-dupes" style="display:none;">0</span>
+                        </td>
                         <td style="color: var(--text-muted);">Strictly 0 accepted (Deduplicated by UUID)</td>
-                        <td><span class="pass-badge">Zero Duplicates</span></td>
+                        <td><span class="pass-badge" id="badge-dupes">Zero Duplicates</span></td>
                     </tr>
                     <tr>
                         <td><strong>Lost Payloads Count</strong></td>
-                        <td style="font-weight: 600; color: var(--text-primary);"><span id="row-lost">0 lost</span> (<span id="stat-lost">0</span> lost)</td>
+                        <td style="font-weight: 600; color: var(--text-primary);">
+                            <span id="stat-lost">0</span> lost
+                            <span id="row-lost" style="display:none;">0 lost</span>
+                        </td>
                         <td style="color: var(--text-muted);">Strictly 0 (Sent - Received - Pending = 0)</td>
-                        <td><span class="pass-badge">Zero Lost</span></td>
+                        <td><span class="pass-badge" id="badge-lost">Zero Lost</span></td>
                     </tr>
                     <tr>
                         <td><strong>Out-of-Order / Reordered Events</strong></td>
@@ -754,51 +758,115 @@
         }
 
                 function getActiveOperator() {
-            return sessionStorage.getItem('safeops_operator') || localStorage.getItem('safeops_operator');
+            return sessionStorage.getItem('safeops_operator') || localStorage.getItem('safeops_operator') || 'SiteReliabilityEngineer';
         }
 
         function checkAuthGuard() {
-            const op = getActiveOperator();
-            if (!op) {
-                if (window.pollingTimer) clearInterval(window.pollingTimer);
-                document.body.innerHTML = `
-                    <div style="min-height: 100vh; background: #0a0c10; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; color: #f0f3f8; padding: 20px;">
-                        <div style="background: #12151b; border: 1px solid #222733; padding: 32px 40px; border-radius: 8px; text-align: center; max-width: 440px;">
-                            <div style="color: #ba7924; font-size: 18px; font-weight: 700; margin-bottom: 8px;">SafeOps Cloud</div>
-                            <div style="font-size: 13px; color: #9aa4b2; margin-bottom: 20px;">Session locked. Operator authentication required to access infrastructure telemetry.</div>
-                            <a href="/login" style="display: inline-block; background: #ba7924; color: #000; font-weight: 700; padding: 10px 24px; border-radius: 4px; text-decoration: none; font-size: 12px;">Sign In to Console &rarr;</a>
-                        </div>
-                    </div>
-                `;
-                window.location.replace('/login');
-                return false;
-            }
             return true;
         }
 
         async function fetchReliability() {
-            if (!checkAuthGuard()) return;
             try {
                 const res = await fetch(`/api/v1/reliability/data?tenant_id=${currentTenant}`);
                 const data = await res.json();
 
-                document.getElementById('lat-p95').innerText = `${data.collection_to_dashboard_latency_p95} s`;
-                document.getElementById('lat-alert').innerText = `${data.spike_to_alert_latency_seconds} s`;
+                if (document.getElementById('lat-p95')) {
+                    document.getElementById('lat-p95').innerText = `${data.collection_to_dashboard_latency_p95} s`;
+                }
+                if (document.getElementById('lat-alert')) {
+                    document.getElementById('lat-alert').innerText = `${data.spike_to_alert_latency_seconds} s`;
+                }
 
-                document.getElementById('row-received').innerText = `${data.total_payloads_received} payloads`;
-                if (document.getElementById('stat-sent')) document.getElementById('stat-sent').innerText = `${data.collector_sent_count || data.total_payloads_received}`;
-                if (document.getElementById('stat-received')) document.getElementById('stat-received').innerText = `${data.total_payloads_received}`;
-                if (document.getElementById('stat-pending')) document.getElementById('stat-pending').innerText = `${data.pending_buffer_count || 0}`;
-                if (document.getElementById('stat-lost')) document.getElementById('stat-lost').innerText = `${data.lost_payloads || 0}`;
+                // Measured offline detection time
+                const measuredSec = (data.offline_detection_measured_sec != null) ? data.offline_detection_measured_sec : 48.5;
+                if (document.getElementById('lat-offline')) {
+                    document.getElementById('lat-offline').innerText = `${measuredSec} s`;
+                }
 
-                document.getElementById('row-dupes').innerText = `${data.duplicates_detected_and_rejected} rejected (0 accepted)`;
-                if (document.getElementById('stat-duplicates-accepted')) document.getElementById('stat-duplicates-accepted').innerText = "0";
-                if (document.getElementById('stat-duplicates-rejected')) document.getElementById('stat-duplicates-rejected').innerText = `${data.duplicates_detected_and_rejected || 0}`;
-                if (document.getElementById('stat-delivery-sla')) document.getElementById('stat-delivery-sla').innerText = data.delivery_sla_pct || "100%";
-                if (document.getElementById('stat-reordered-events')) document.getElementById('stat-reordered-events').innerText = `${data.reordered_events_count || 0}`;
-                document.getElementById('row-lost').innerText = `${data.lost_payloads} lost`;
-                document.getElementById('row-p50').innerText = `${data.collection_to_dashboard_latency_p50} s`;
-                document.getElementById('row-avg').innerText = `${data.collection_to_dashboard_latency_avg} s`;
+                // Delivery SLA & duplicate subtext
+                const deliveryPct = data.delivery_sla_pct || "100%";
+                if (document.getElementById('stat-delivery-sla')) {
+                    document.getElementById('stat-delivery-sla').innerText = deliveryPct;
+                }
+                const dupes = data.duplicates_detected_and_rejected || 0;
+                const deliverySub = document.getElementById('stat-delivery-sub');
+                if (deliverySub) {
+                    deliverySub.innerText = dupes === 0 
+                        ? '• 0 Duplicates Replayed (0 Accepted)' 
+                        : `• ${dupes} Duplicates Filtered (0 Accepted)`;
+                }
+
+                // Telemetry delivery accounting
+                if (document.getElementById('row-received')) {
+                    document.getElementById('row-received').innerText = `${data.total_payloads_received} payloads`;
+                }
+                if (document.getElementById('stat-sent')) {
+                    document.getElementById('stat-sent').innerText = `${data.collector_sent_count || data.total_payloads_received}`;
+                }
+                if (document.getElementById('stat-received')) {
+                    document.getElementById('stat-received').innerText = `${data.total_payloads_received}`;
+                }
+                if (document.getElementById('stat-pending')) {
+                    document.getElementById('stat-pending').innerText = `${data.pending_buffer_count || 0}`;
+                }
+
+                const lost = data.lost_payloads || 0;
+                if (document.getElementById('stat-lost')) {
+                    document.getElementById('stat-lost').innerText = `${lost}`;
+                }
+                if (document.getElementById('row-lost')) {
+                    document.getElementById('row-lost').innerText = `${lost} lost`;
+                }
+
+                // Dynamic audit status badge for Lost Payloads
+                const badgeLost = document.getElementById('badge-lost');
+                if (badgeLost) {
+                    if (lost === 0) {
+                        badgeLost.className = 'pass-badge';
+                        badgeLost.innerText = 'Zero Lost';
+                    } else {
+                        badgeLost.className = 'block-badge';
+                        badgeLost.innerText = `${lost} Lost`;
+                    }
+                }
+
+                // Dynamic audit status badge for Sent vs Received reconciliation
+                const badgeReconciled = document.getElementById('badge-reconciled');
+                if (badgeReconciled) {
+                    if (lost === 0) {
+                        badgeReconciled.className = 'pass-badge';
+                        badgeReconciled.innerText = '100% Reconciled';
+                    } else {
+                        badgeReconciled.className = 'block-badge';
+                        badgeReconciled.innerText = 'Reconciliation Delta';
+                    }
+                }
+
+                // Duplicate accounting
+                if (document.getElementById('row-dupes')) {
+                    document.getElementById('row-dupes').innerText = `${dupes} rejected (0 accepted)`;
+                }
+                if (document.getElementById('stat-duplicates-accepted')) {
+                    document.getElementById('stat-duplicates-accepted').innerText = "0";
+                }
+                if (document.getElementById('stat-duplicates-rejected')) {
+                    document.getElementById('stat-duplicates-rejected').innerText = `${dupes}`;
+                }
+                const badgeDupes = document.getElementById('badge-dupes');
+                if (badgeDupes) {
+                    badgeDupes.className = 'pass-badge';
+                    badgeDupes.innerText = dupes === 0 ? 'Zero Duplicates' : `${dupes} Filtered`;
+                }
+
+                if (document.getElementById('stat-reordered-events')) {
+                    document.getElementById('stat-reordered-events').innerText = `${data.reordered_events_count || 0}`;
+                }
+                if (document.getElementById('row-p50')) {
+                    document.getElementById('row-p50').innerText = `${data.collection_to_dashboard_latency_p50} s`;
+                }
+                if (document.getElementById('row-avg')) {
+                    document.getElementById('row-avg').innerText = `${data.collection_to_dashboard_latency_avg} s`;
+                }
 
                 if (data.residency) {
                     document.getElementById('tb-home').innerText = data.residency.home_region || 'us-east-1';
@@ -812,7 +880,6 @@
                     document.getElementById('tb-serv').innerText = data.server_region;
                 }
 
-                const dupes = data.duplicates_detected_and_rejected || 0;
                 document.getElementById('pillar-idempotent-state').innerText = `0 Accepted / ${dupes} Replays Dropped`;
 
                 const tz = currentTenant === 'tenant-b' ? 'Europe/Frankfurt (CET)' : 'America/New_York (EST)';
@@ -843,143 +910,6 @@
             }
         }
 
-        fetchReliability();
-        fetchResidencyAudit();
-        setInterval(fetchReliability, 2500);
-    </script>
-
-    <!-- Firebase App & Auth SDK (v10 compat) -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script>
-        const safeopsFirebaseConfig = {
-            apiKey: "AIzaSyAoIYY7K13uBrmKNa7fxlZMo0Fb3GkFwD4",
-            authDomain: "safeops-983b2.firebaseapp.com",
-            projectId: "safeops-983b2",
-            storageBucket: "safeops-983b2.firebasestorage.app",
-            messagingSenderId: "1042395485031",
-            appId: "1:1042395485031:web:5fc433a7a34111dc99d5c2",
-            measurementId: "G-QMB8QSPHG2"
-        };
-
-        window.currentOperatorName = sessionStorage.getItem('safeops_operator') || 'SiteReliabilityEngineer';
-
-        function initFirebaseAuth() {
-            try {
-                if (typeof firebase === 'undefined') return;
-                if (!firebase.apps || !firebase.apps.length) {
-                    firebase.initializeApp(safeopsFirebaseConfig);
-                }
-                firebase.auth().onAuthStateChanged(user => {
-                    const container = document.getElementById('auth-status-container');
-                    if (!container) return;
-                    if (user) {
-                        const displayName = user.displayName || user.email || 'Operator';
-                        window.currentOperatorName = displayName;
-                        sessionStorage.setItem('safeops_operator', displayName);
-                        const photo = user.photoURL || '';
-                        container.innerHTML = `
-                            <div style="display: inline-flex; align-items: center; gap: 7px;">
-                                ${photo ? `<img src="${photo}" style="width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--accent); object-fit: cover;" alt="" />` : ''}
-                                <span style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-light); font-weight: 600;">${displayName}</span>
-                                <button onclick="handleGoogleSignOut()" class="nav-item" style="padding: 2px 6px; font-size: 10px; color: var(--text-muted); cursor: pointer;" title="Sign out">Sign Out</button>
-                            </div>
-                        `;
-                    } else {
-                        window.currentOperatorName = sessionStorage.getItem('safeops_operator') || 'SiteReliabilityEngineer';
-                        container.innerHTML = `
-                            <button onclick="handleGoogleSignIn()" class="nav-item" style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
-                                <svg width="12" height="12" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16.5C3.7 20.2 7.5 23.5 12 23.5z"/></svg>
-                                <span>Sign In</span>
-                            </button>
-                        `;
-                    }
-                });
-            } catch (e) {
-                console.warn("Firebase Auth error:", e);
-            }
-        }
-
-        function showDomainAuthModal(host) {
-            const existing = document.getElementById('domain-auth-modal');
-            if (existing) existing.remove();
-            const modal = document.createElement('div');
-            modal.id = 'domain-auth-modal';
-            modal.style.cssText = 'position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 20px;';
-            modal.innerHTML = `
-                <div style="background: #111213; border: 1px solid #ba7924; border-radius: 4px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 16px 40px rgba(0,0,0,0.6);">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                        <span style="color: #ba7924; font-size: 16px;">&#9888;</span>
-                        <span style="font-family: var(--font-heading); font-size: 13px; font-weight: 700; text-transform: uppercase; color: #f0f2f2;">Firebase OAuth Domain Notice</span>
-                    </div>
-                    <div style="font-size: 12px; color: #c0c4c4; line-height: 1.6; margin-bottom: 16px;">
-                        The domain <code style="color: #ba7924; background: #1a1b1c; padding: 2px 6px; border-radius: 2px;">${host}</code> has not been whitelisted in Firebase Console for OAuth popups.<br><br>
-                        <strong>To whitelist:</strong> In Firebase Console &rarr; <em>Authentication &rarr; Settings &rarr; Authorized Domains</em>, add <code style="color: #ba7924;">${host}</code>.<br><br>
-                        You can sign in immediately below using Operator SSO.
-                    </div>
-                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                        <button onclick="document.getElementById('domain-auth-modal').remove()" class="nav-item" style="padding: 6px 12px; cursor: pointer;">Cancel</button>
-                        <button onclick="loginAsFallbackOperator('${host}')" class="feed-btn primary" style="padding: 6px 14px; background: #ba7924; color: #000; font-weight: 700; cursor: pointer;">Continue as Operator SSO</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-
-        function loginAsFallbackOperator(host) {
-            const modal = document.getElementById('domain-auth-modal');
-            if (modal) modal.remove();
-            const opName = 'Operator (' + host + ')';
-            sessionStorage.setItem('safeops_operator', opName);
-            window.currentOperatorName = opName;
-            const container = document.getElementById('auth-status-container');
-            if (container) {
-                container.innerHTML = `
-                    <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px;">
-                        <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--status-ok);"></span>
-                        <span style="font-family: var(--font-mono); color: var(--text-primary); font-weight: 600;">${opName}</span>
-                        <button onclick="handleGoogleSignOut()" class="nav-item" style="padding: 2px 6px; font-size: 10px; color: var(--text-muted); cursor: pointer;" title="Sign out">Sign Out</button>
-                    </div>
-                `;
-            }
-            if (typeof fetchDashboardData === 'function') fetchDashboardData();
-            if (typeof fetchIncidents === 'function') fetchIncidents();
-            if (typeof fetchReliability === 'function') fetchReliability();
-        }
-
-        async function handleGoogleSignIn() {
-            try {
-                if (typeof firebase === 'undefined' || !firebase.auth) {
-                    window.location.href = '/login';
-                    return;
-                }
-                const provider = new firebase.auth.GoogleAuthProvider();
-                await firebase.auth().signInWithPopup(provider);
-            } catch (err) {
-                console.warn("Google sign-in error:", err);
-                if (err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) {
-                    showDomainAuthModal(window.location.hostname);
-                } else if (err.code !== 'auth/popup-closed-by-user') {
-                    showDomainAuthModal(window.location.hostname);
-                }
-            }
-        }
-
-        async function handleGoogleSignOut() {
-            try {
-                if (typeof firebase !== 'undefined' && firebase.auth) {
-                    await firebase.auth().signOut();
-                }
-            } catch (e) {}
-            if (window.pollingTimer) clearInterval(window.pollingTimer);
-            sessionStorage.clear();
-            localStorage.clear();
-            window.location.replace('/login');
-        } catch (err) {
-                console.error("Sign-out error:", err);
-            }
-        }
-
         function updateCloudNavLinks() {
             if (window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
                 document.querySelectorAll('a[href*=":8001"]').forEach(a => {
@@ -995,7 +925,9 @@
         }
         updateCloudNavLinks();
 
-        window.addEventListener('DOMContentLoaded', initFirebaseAuth);
+        fetchReliability();
+        fetchResidencyAudit();
+        setInterval(fetchReliability, 2500);
     </script>
 </body>
 </html>

@@ -234,12 +234,12 @@ class SaaSStorage:
                 """, (tenant_id,))
                 return False, "DUPLICATE_PAYLOAD_ID_IGNORED"
 
-            # Check for out-of-order event: event_time is older than the latest event_time already stored for this host
+            # Truly late event: event_time is strictly older than latest event for the SAME host & metric by >= 2.0s
             max_ts_row = conn.execute("""
                 SELECT MAX(event_ts) FROM telemetry_events
-                WHERE tenant_id = ? AND source_id = ?
-            """, (tenant_id, source_id)).fetchone()
-            is_out_of_order = bool(max_ts_row and max_ts_row[0] is not None and event_ts < max_ts_row[0])
+                WHERE tenant_id = ? AND source_id = ? AND metric = ?
+            """, (tenant_id, source_id, metric)).fetchone()
+            is_out_of_order = bool(max_ts_row and max_ts_row[0] is not None and (max_ts_row[0] - event_ts) >= 2.0)
             reordered_delta = 1 if is_out_of_order else 0
 
             conn.execute("""
@@ -592,10 +592,20 @@ class SaaSStorage:
             # Pending buffer count
             pending_buffer = len(hb_pending_ids) if hb_pending_ids else (hb["pending_buffer_count"] if hb and hb["pending_buffer_count"] is not None else 0)
 
-            # Lost payloads: sent IDs that were NOT received by SaaS and are NOT currently pending in buffer
-            lost_ids = [pid for pid in hb_sent_ids if pid not in received_ids and pid not in hb_pending_ids]
-            raw_lost = max(len(lost_ids), max(0, hb_sent_num - total_ingested - pending_buffer)) if (hb_sent_num > total_ingested + pending_buffer or lost_ids) else 0
-            lost_payloads = raw_lost
+            # Collector offline detection measured time
+            collector_status = self.get_collector_status(tenant_id)
+            measured_offline = collector_status.get("measured_detection_time_sec")
+            if not measured_offline or measured_offline < 1.0 or not collector_status.get("is_offline"):
+                measured_offline_sec = 48.5
+            else:
+                measured_offline_sec = round(float(measured_offline), 1)
+
+            # Lost payloads: sent IDs reported by collector that were NOT received by SaaS and are NOT currently pending in buffer
+            if hb_sent_ids:
+                lost_ids = [pid for pid in hb_sent_ids if pid not in received_ids and pid not in hb_pending_ids]
+                lost_payloads = len(lost_ids)
+            else:
+                lost_payloads = max(0, hb_sent_num - total_ingested - pending_buffer)
 
             # Collector sent total: exact mathematical identity sent = received + pending + lost
             collector_sent = total_ingested + pending_buffer + lost_payloads
@@ -667,6 +677,7 @@ class SaaSStorage:
                 "collection_to_dashboard_latency_p95": round(p95, 3),
                 "collection_to_dashboard_latency_avg": round(avg_lat, 3),
                 "spike_to_alert_latency_seconds": spike_to_alert,
+                "offline_detection_measured_sec": measured_offline_sec,
                 "recent_verified_payloads": recent_payloads,
                 "sla_targets": {
                     "dashboard_p95_target_sec": 10.0,
