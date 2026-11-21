@@ -633,7 +633,10 @@ class UniversalFeedAdapter(BaseTelemetryAdapter):
         else:
             self.format_mode = str(self.config.get("input_format", "simulator")).lower()
 
-        if feed_file_path:
+        env_feed = os.environ.get("FEED_FILE_PATH")
+        if env_feed:
+            self.feed_file_path = env_feed
+        elif feed_file_path:
             self.feed_file_path = feed_file_path
         else:
             self.feed_file_path = self.config.get("feed_file_path", "data_feed/telemetry_input.data")

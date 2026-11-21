@@ -524,7 +524,9 @@
                 <button id="btn-sample-syslog" class="feed-btn" onclick="loadSampleFeed('syslog')">Load Sample Syslog</button>
                 <button id="btn-sample-jsonl" class="feed-btn" onclick="loadSampleFeed('jsonl')">Load Sample JSONL</button>
                 <button id="btn-sample-reset" class="feed-btn primary" onclick="loadSampleFeed('simulator')">Reset Simulator</button>
-                <button class="feed-btn" onclick="toggleHttpDrawer()" style="margin-left: auto;">HTTP Push Console &#9662;</button>
+                <input type="file" id="system-file-input" style="display: none;" onchange="uploadSystemFile(event)" accept=".csv,.log,.syslog,.json,.jsonl,.txt,.data">
+                <button id="btn-upload-file" class="feed-btn" onclick="document.getElementById('system-file-input').click()">Upload System File &#128194;</button>
+                <button class="feed-btn" onclick="toggleHttpDrawer()" style="margin-left: auto;">HTTP Push / Path Console &#9662;</button>
             </div>
 
             <div id="feed-status-banner" style="display: none; margin-top: 10px; padding: 7px 12px; background: rgba(0, 255, 65, 0.08); border-left: 3px solid var(--accent); font-family: var(--font-mono); font-size: 11px; color: var(--accent); border-radius: 2px;">
@@ -544,6 +546,11 @@
                 <textarea id="http-payload-input" class="code-area" placeholder="Paste single raw telemetry line here..."></textarea>
                 <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
                     <button class="feed-btn primary" onclick="sendHttpPush()">Send Line to Collector</button>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-subtle); align-items: center;">
+                    <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Stream Direct System File Path:</span>
+                    <input id="system-path-input" type="text" class="custom-select" style="flex: 1; padding: 4px 8px; font-family: var(--font-mono); font-size: 11px;" placeholder="/var/log/system.log or /path/to/test.csv">
+                    <button class="feed-btn" onclick="connectSystemFilePath()">Connect File</button>
                 </div>
             </div>
         </div>
@@ -793,6 +800,81 @@
                     btn.disabled = false;
                     btn.innerText = originalText;
                 }
+            }
+        }
+
+        async function uploadSystemFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const btn = document.getElementById('btn-upload-file');
+            const origText = btn ? btn.innerText : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Uploading...';
+            }
+            try {
+                const reader = new FileReader();
+                reader.onload = async function() {
+                    try {
+                        const content = reader.result;
+                        const res = await fetch('/api/v1/adapter/upload', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/octet-stream',
+                                'X-Filename': file.name
+                            },
+                            body: content
+                        });
+                        const data = await res.json();
+                        const activeMode = data.mode || data.format || 'auto';
+                        const selectEl = document.getElementById('format-mode-select');
+                        if (selectEl) selectEl.value = activeMode;
+                        const badgeEl = document.getElementById('adapter-badge');
+                        if (badgeEl) badgeEl.innerText = `MODE: ${activeMode.toUpperCase()}`;
+                        showFeedStatus(data.message || `Loaded system file '${file.name}' (${data.bytes_received} bytes)`);
+                    } catch (uploadErr) {
+                        showFeedStatus(`Upload failed: ${uploadErr.message}`, true);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } catch (err) {
+                console.error(err);
+                showFeedStatus(`Upload failed: ${err.message}`, true);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = origText;
+                }
+                event.target.value = '';
+            }
+        }
+
+        async function connectSystemFilePath() {
+            const pathInput = document.getElementById('system-path-input');
+            const path = pathInput ? pathInput.value.trim() : '';
+            if (!path) {
+                alert('Please enter an absolute file path on the system.');
+                return;
+            }
+            try {
+                const res = await fetch('/api/v1/adapter/set_feed_path', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: path })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    const activeMode = data.mode || data.format || 'csv';
+                    const selectEl = document.getElementById('format-mode-select');
+                    if (selectEl) selectEl.value = activeMode;
+                    const badgeEl = document.getElementById('adapter-badge');
+                    if (badgeEl) badgeEl.innerText = `MODE: ${activeMode.toUpperCase()}`;
+                    showFeedStatus(data.message || `Connected to system file: ${path}`);
+                } else {
+                    showFeedStatus(`Error: ${data.detail || data.message || 'File not found'}`, true);
+                }
+            } catch (err) {
+                showFeedStatus(`Connection failed: ${err.message}`, true);
             }
         }
 

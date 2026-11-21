@@ -301,6 +301,92 @@ async def load_sample_feed(payload: Dict[str, Any] = Body(...)):
     })
 
 
+@app.post("/api/v1/adapter/upload")
+async def upload_system_file(request: Request):
+    """
+    Accepts raw system files (CSV, Syslog, JSON, JSONL, TXT) via HTTP POST.
+    Writes content directly to the collector feed and starts streaming live.
+    """
+    content_type = request.headers.get("content-type", "")
+    filename = request.headers.get("x-filename", "system_telemetry.data")
+
+    body_bytes = await request.body()
+    if not body_bytes:
+        raise HTTPException(status_code=400, detail="Empty file upload")
+
+    # If payload is JSON with { "content": "...", "filename": "..." }
+    if "json" in content_type:
+        try:
+            payload = json.loads(body_bytes.decode("utf-8", errors="ignore"))
+            if isinstance(payload, dict) and "content" in payload:
+                filename = payload.get("filename", filename)
+                body_bytes = payload["content"].encode("utf-8")
+        except Exception:
+            pass
+
+    target_file = ADAPTER.feed_file_path
+    os.makedirs(os.path.dirname(target_file) if os.path.dirname(target_file) else ".", exist_ok=True)
+    with open(target_file, "wb") as f:
+        f.write(body_bytes)
+
+    # Detect format from content
+    sample_text = body_bytes[:4096].decode("utf-8", errors="ignore")
+    detected_mode = ADAPTER.parser.detect_format(sample_text)
+    if detected_mode == "auto":
+        first_line = sample_text.splitlines()[0] if sample_text.splitlines() else ""
+        if sample_text.strip().startswith(("{", "[")):
+            detected_mode = "jsonl"
+        elif "," in first_line:
+            detected_mode = "csv"
+        else:
+            detected_mode = "syslog"
+
+    ADAPTER.set_mode(detected_mode)
+    ADAPTER.file_last_position = 0
+
+    return JSONResponse(content={
+        "status": "uploaded",
+        "filename": filename,
+        "bytes_received": len(body_bytes),
+        "mode": detected_mode,
+        "format": detected_mode,
+        "target_file": target_file,
+        "message": f"Loaded system file '{filename}' ({len(body_bytes)} bytes). Streaming live in {detected_mode.upper()} mode."
+    })
+
+
+@app.post("/api/v1/adapter/set_feed_path")
+async def set_feed_path_endpoint(payload: Dict[str, Any] = Body(...)):
+    """Allows pointing the collector directly to any file path on the system."""
+    path = payload.get("path")
+    if not path or not os.path.exists(path):
+        raise HTTPException(status_code=404, detail=f"System file at '{path}' not found or inaccessible")
+
+    mode = payload.get("mode")
+    if not mode or mode == "auto":
+        try:
+            with open(path, "r", errors="ignore") as f:
+                first_chunk = f.read(2048)
+            mode = ADAPTER.parser.detect_format(first_chunk)
+            if mode == "auto":
+                first_line = first_chunk.splitlines()[0] if first_chunk.splitlines() else ""
+                mode = "csv" if "," in first_line else "syslog"
+        except Exception:
+            mode = "csv"
+
+    ADAPTER.feed_file_path = path
+    ADAPTER.set_mode(mode)
+    ADAPTER.file_last_position = 0
+
+    return JSONResponse(content={
+        "status": "connected",
+        "feed_file_path": path,
+        "mode": mode,
+        "format": mode,
+        "message": f"Collector connected to system file: {path} ({mode.upper()} mode)"
+    })
+
+
 @app.get("/api/v1/status")
 async def get_collector_status():
     """Returns live telemetry adapter status, active format mode, and buffer metrics."""

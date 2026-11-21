@@ -231,6 +231,37 @@ class TestCollectorUniversalEndpoints(unittest.TestCase):
             # Secret token must not be in short_context
             self.assertNotIn("ak_live_secret_998811", p["short_context"])
 
+    def test_06_system_file_upload_endpoint(self):
+        """Verify POST /api/v1/adapter/upload accepts system telemetry files."""
+        csv_bytes = b"tenant_id,hostname,metric,value\ntenant-a,system-host-01,cpu_usage_pct,88.4\n"
+        res = self.client.post(
+            "/api/v1/adapter/upload",
+            content=csv_bytes,
+            headers={"Content-Type": "application/octet-stream", "X-Filename": "custom_system_test.csv"}
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["status"], "uploaded")
+        self.assertEqual(data["filename"], "custom_system_test.csv")
+        self.assertEqual(data["mode"], "csv")
+
+    def test_07_set_feed_path_endpoint(self):
+        """Verify POST /api/v1/adapter/set_feed_path connects directly to a system file."""
+        with tempfile.NamedTemporaryFile("w+", delete=False, suffix=".csv") as tmp:
+            tmp.write("tenant_id,hostname,metric,value\ntenant-a,srv-sys-01,memory_usage_pct,55.0\n")
+            tmp.flush()
+            tmp_path = tmp.name
+
+        try:
+            res = self.client.post("/api/v1/adapter/set_feed_path", json={"path": tmp_path})
+            self.assertEqual(res.status_code, 200)
+            data = res.json()
+            self.assertEqual(data["status"], "connected")
+            self.assertEqual(data["feed_file_path"], tmp_path)
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
 
 if __name__ == "__main__":
     unittest.main()
