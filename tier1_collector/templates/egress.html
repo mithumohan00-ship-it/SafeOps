@@ -879,14 +879,17 @@
                 return;
             }
 
+            // Only display the single latest egress record (not historical cards)
+            const latestPairs = pairs.slice(0, 1);
+
             // Fingerprint check: Skip DOM reconstruction if data hasn't changed!
-            const currentHash = pairs.map(p => `${p.payload_id}:${p.sent_to_saas_at || ''}`).join('|');
+            const currentHash = latestPairs.map(p => `${p.payload_id}:${p.sent_to_saas_at || ''}`).join('|');
             if (currentHash === lastRenderHash) {
                 return; // 0ms delay: Instant!
             }
             lastRenderHash = currentHash;
 
-            container.innerHTML = pairs.map(p => {
+            container.innerHTML = latestPairs.map(p => {
                 const raw = p.raw_dict || {};
                 const egress = p.sanitized_dict || {};
 
