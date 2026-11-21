@@ -1,0 +1,2 @@
+tenant_id,hostname,metric,value
+tenant-a,system-host-01,cpu_usage_pct,88.4
